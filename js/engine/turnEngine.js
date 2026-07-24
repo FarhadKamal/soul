@@ -82,6 +82,12 @@ function applyEndOfActionChecks(game) {
   if (remaining.length === 1) {
     game.phase = 'game-over';
     game.winnerPlayerId = remaining[0].id;
+  } else if (remaining.length === 0) {
+    // A single action (e.g. Athena's curse mirror killing both the
+    // attacker and Athena at once) can eliminate every remaining player
+    // simultaneously - that's a draw, not a soft-lock.
+    game.phase = 'game-over';
+    game.winnerPlayerId = null;
   }
 }
 

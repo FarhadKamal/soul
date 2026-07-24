@@ -30,7 +30,7 @@ export function renderDashboard(container, game, { onRestart }) {
     if (game.phase === 'game-over') {
       if (!victorySoundPlayed) {
         victorySoundPlayed = true;
-        playVictory();
+        if (game.winnerPlayerId) playVictory();
       }
       container.appendChild(renderGameOver());
       return;
@@ -53,27 +53,34 @@ export function renderDashboard(container, game, { onRestart }) {
     wrap.className = 'dashboard';
 
     const winner = game.players.find((p) => p.id === game.winnerPlayerId);
+    const isDraw = !winner;
 
     const banner = document.createElement('div');
     banner.className = 'game-over-banner';
 
     const crown = document.createElement('div');
     crown.className = 'victory-crown';
-    crown.textContent = '👑';
+    crown.textContent = isDraw ? '🤝' : '👑';
     banner.appendChild(crown);
 
     const h1 = document.createElement('h1');
-    h1.textContent = `${winner.name} Wins!`;
+    h1.textContent = isDraw ? "It's a Draw!" : `${winner.name} Wins!`;
     banner.appendChild(h1);
 
     const sub = document.createElement('div');
     sub.className = 'victory-subtitle';
-    sub.textContent = `Victorious after ${game.round} round${game.round === 1 ? '' : 's'}`;
+    sub.textContent = isDraw
+      ? `All remaining players were eliminated simultaneously after ${game.round} round${game.round === 1 ? '' : 's'}`
+      : `Victorious after ${game.round} round${game.round === 1 ? '' : 's'}`;
     banner.appendChild(sub);
+
+    const portraitCharacterIds = isDraw
+      ? Object.keys(game.characters)
+      : winner.characterIds;
 
     const portraitRow = document.createElement('div');
     portraitRow.className = 'victory-portraits';
-    winner.characterIds.forEach((charId) => {
+    portraitCharacterIds.forEach((charId) => {
       const character = game.characters[charId];
       const def = CHARACTERS[charId];
       const box = document.createElement('div');
