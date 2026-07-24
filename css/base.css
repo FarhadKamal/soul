@@ -1,0 +1,55 @@
+:root {
+  --bg: #0f0a1a;
+  --bg-panel: #1a1230;
+  --bg-card: #201640;
+  --border: #4c3a7a;
+  --gold: #d4af37;
+  --text: #f0ecff;
+  --text-dim: #a89bd0;
+  --heart: #e0234e;
+  --heart-empty: #3a2a52;
+  --shield: #4aa8ff;
+  --danger: #e0234e;
+  --success: #3ecf6e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background: radial-gradient(ellipse at top, #241a44 0%, var(--bg) 60%);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: 0.03em;
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}

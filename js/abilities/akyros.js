@@ -1,0 +1,61 @@
+import { applyDamage } from '../engine/damagePipeline.js';
+
+function anyEnemyIsMarked(game, akyrosId) {
+  const akyros = game.characters[akyrosId];
+  return Object.values(game.characters).some(
+    (c) => c.ownerId !== akyros.ownerId && !c.isKO && akyros.special.marks.has(c.id)
+  );
+}
+
+export const actions = {
+  hiddenMark: {
+    label: 'Hidden Mark',
+    needsTarget: true,
+    isLegal: () => true,
+    execute(character, targetId, game, log) {
+      character.special.marks.add(targetId);
+      // Deliberately no public log text naming the target; UI shows a
+      // generic "Hidden Mark placed" line so other players can't see it.
+      log.push({ type: 'hidden-mark', characterId: character.id, targetId, hidden: true });
+      return {};
+    },
+  },
+  fatalSlash: {
+    label: 'Fatal Slash',
+    needsTarget: true,
+    isLegal: () => true,
+    execute(character, targetId, game, log) {
+      const wasMarked = character.special.marks.has(targetId);
+      const amount = wasMarked ? 2 : 1;
+      const result = applyDamage(game, log, {
+        sourceCharacterId: character.id,
+        targetCharacterId: targetId,
+        amount,
+      });
+      log.push({ type: 'attack', characterId: character.id, actionId: 'fatalSlash', targetId, wasMarked, ...result });
+      return result;
+    },
+  },
+  shadowExecution: {
+    label: 'Shadow Execution',
+    needsTarget: true,
+    isLegal: (character, game) => !character.usedSpecial && anyEnemyIsMarked(game, character.id),
+    execute(character, targetId, game, log) {
+      character.usedSpecial = true;
+      const result = applyDamage(game, log, {
+        sourceCharacterId: character.id,
+        targetCharacterId: targetId,
+        amount: 3,
+        ignoresShield: true,
+      });
+      log.push({ type: 'special', characterId: character.id, actionId: 'shadowExecution', targetId, ...result });
+      return result;
+    },
+  },
+};
+
+export function legalShadowExecutionTargets(character, game) {
+  return Object.values(game.characters).filter(
+    (c) => c.ownerId !== character.ownerId && !c.isKO && character.special.marks.has(c.id)
+  );
+}

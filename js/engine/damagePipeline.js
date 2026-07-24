@@ -1,0 +1,115 @@
+// Single reusable damage/heal/shield resolution path.
+// Every ability routes its damage through applyDamage() so that shield
+// absorption, Akyros's Dodge, Blade's Rebirth, and Athena's curse mirror
+// are all handled in one place instead of duplicated per character.
+
+export function applyDamage(game, log, {
+  sourceCharacterId,
+  targetCharacterId,
+  amount,
+  ignoresShield = false,
+  ignoresUntargetable = false,
+  isMirror = false,
+}) {
+  const target = game.characters[targetCharacterId];
+  const result = {
+    targetCharacterId,
+    amountDealt: 0,
+    absorbed: 0,
+    dodged: false,
+    revived: false,
+    koTriggered: false,
+    mirrorResult: null,
+  };
+
+  if (!target || target.isKO) return result;
+
+  // Untargetable is enforced primarily at the targeting UI layer; this is a
+  // defensive re-check so a bug upstream can't sneak damage through.
+  if (target.untargetable && !ignoresUntargetable) {
+    return result;
+  }
+
+  let amt = amount;
+
+  // Akyros Dodge: only applies to direct attacks, never to mirrored damage
+  // (confirmed ruling: Athena's curse mirror bypasses Dodge).
+  if (target.id === 'akyros' && !isMirror) {
+    if (!target.special.dodgedAttackerIds.has(sourceCharacterId)) {
+      target.special.dodgedAttackerIds.add(sourceCharacterId);
+      result.dodged = true;
+      log.push({ type: 'dodge', attackerId: sourceCharacterId, targetCharacterId });
+      return result;
+    }
+  }
+
+  if (!ignoresShield && target.shield > 0) {
+    const absorbed = Math.min(target.shield, amt);
+    target.shield -= absorbed;
+    amt -= absorbed;
+    result.absorbed = absorbed;
+  }
+
+  target.hearts = Math.max(0, target.hearts - amt);
+  result.amountDealt = amt;
+
+  // Blade Rebirth: automatic, intercepts the KO the instant it would happen.
+  if (target.id === 'blade' && target.hearts === 0 && !target.special.rebirthUsed) {
+    target.hearts = 2;
+    target.special.rebirthUsed = true;
+    target.usedSpecial = true;
+    result.revived = true;
+    log.push({ type: 'rebirth', targetCharacterId });
+  } else if (target.hearts === 0) {
+    target.isKO = true;
+    result.koTriggered = true;
+  }
+
+  // Athena curse mirror: triggered by damage actually landing on Athena.
+  if (target.id === 'athena' && !isMirror && result.amountDealt > 0) {
+    const cursedId = target.special.curseTargetCharacterId;
+    if (cursedId && game.characters[cursedId] && !game.characters[cursedId].isKO) {
+      result.mirrorResult = applyDamage(game, log, {
+        sourceCharacterId,
+        targetCharacterId: cursedId,
+        amount: result.amountDealt,
+        ignoresShield: false,
+        ignoresUntargetable: true,
+        isMirror: true,
+      });
+      log.push({
+        type: 'curse-mirror',
+        fromCharacterId: 'athena',
+        toCharacterId: cursedId,
+        amount: result.amountDealt,
+      });
+    }
+  }
+
+  return result;
+}
+
+export function applyHeal(game, targetCharacterId, amount) {
+  const target = game.characters[targetCharacterId];
+  if (!target || target.isKO) return 0;
+  const before = target.hearts;
+  target.hearts = Math.min(target.maxHearts, target.hearts + amount);
+  return target.hearts - before;
+}
+
+export function applyShield(game, targetCharacterId, amount, { decaying = false } = {}) {
+  const target = game.characters[targetCharacterId];
+  if (!target || target.isKO) return;
+  target.shield += amount;
+  if (decaying) target.shieldDecaying = true;
+}
+
+// Called at the start of a character's own turn: decaying shields (Tharox
+// Glory Smash, Athena Divine Restore) expire once that character's next
+// turn begins, regardless of how many rounds/other players passed.
+export function decayShieldIfDue(character) {
+  if (character.shieldDecaying) {
+    character.shield = 0;
+    character.shieldDecaying = false;
+  }
+}

@@ -1,0 +1,296 @@
+SOUL CLASH — FULL RULES REPORT
+================================
+
+GAME OVERVIEW
+-------------
+- Single PC, pass-and-play. The PC screen is a shared "game progress dashboard"
+  showing state (hearts, shields, marks visible where applicable, charges, etc).
+- A human moderator runs the dashboard and privately handles any hidden
+  information (e.g. Akyros's Hidden Mark) and randomizers (coin flips, RPS).
+
+MODES
+-----
+- 2-Player: each player picks 2 characters.
+- 4-Player: each player picks 1 character.
+
+TURN STRUCTURE
+---------------
+- A "round" = one player's full turn, taken in seat order
+  (P1 -> P2 [-> P3 -> P4]).
+- On their turn, a player acts with ALL of their non-KO'd characters. For each
+  character, the player freely chooses which available action to use (normal
+  ability or special, subject to that character's own gating rules described
+  below).
+- Targeting is always fully manual: the active player chooses any enemy
+  character for each ability use, unless a card's own rules restrict this
+  (e.g. Blade's streak tracking, Akyros's marks, Athena's curse target).
+
+LIFE / SHIELD SYSTEM
+---------------------
+- Every character has 7 hearts (lives). Damage subtracts directly from
+  hearts. 0 hearts = KO'd.
+- Shields absorb incoming damage before hearts are touched, but shield
+  behavior differs per character (see individual sections below) — some are
+  permanent stacking pools, others decay after 1 round.
+- A KO'd character is removed from play. A player is only eliminated once ALL
+  of their characters are KO'd. Last player standing wins the match.
+- Exception: Blade's Rebirth special (see below) can bring him back once.
+
+
+===========================================================
+1. CHRONOX — Time Controller
+===========================================================
+
+Chrono Guard (passive, always on)
+- Chronox has 1 shield active from the very start of the match, before
+  anyone has taken a turn.
+- At the start of each of Chronox's own turns, his shield RESETS to exactly
+  1 - it does not stack or accumulate turn to turn.
+- Within a single round (before the next reset), the shield is a depleting
+  pool consumed hit-by-hit as damage lands. If Chronox is hit multiple
+  times in the same round (e.g. by two different enemy characters in a
+  2v2), the 1 shield absorbs the first point of damage from the first hit
+  and is then exhausted, so a second hit that round lands at full damage.
+
+Cyclone Punch (normal action, every turn, any target)
+- Flip a coin: Heads -> target loses 2 hearts. Tails -> target loses 1 heart.
+  (Damage applies after shield absorption as normal.)
+
+Time Freeze (special, 1x per match, targets one enemy)
+- Initial use: the target skips their very next turn. No coin flip needed
+  for this first skip.
+- From Chronox's NEXT turn onward, EVERY subsequent turn of his triggers an
+  automatic bonus coin flip — regardless of who he actually attacks that
+  turn with Cyclone Punch (he is free to attack anyone, not just the frozen
+  target):
+    Heads -> freeze continues, frozen target skips their next turn again.
+    Tails -> freeze ends permanently.
+- Only the frozen character skips their own turn — not their whole player's
+  turn (relevant when a player controls 2 characters).
+
+
+===========================================================
+2. THAROX — Titan Warrior
+===========================================================
+
+Four possible actions, player's free choice each turn (subject to gating):
+
+Smash (normal, any target)
+- Flat -1 heart. No conditions.
+
+Titan Toss (normal, no damage/target)
+- Grants Tharox a "Titan Smash charge." Only usable if Tharox does NOT
+  already hold a charge.
+
+Titan Smash (normal, follow-up, any target)
+- Deals -3 hearts. Only usable while holding a charge (from Titan Toss OR
+  from Glory Smash). Consumes the charge. This ends the combo.
+
+Glory Smash (special, 1x per match, follow-up, any target)
+- Deals -2 hearts to the target, plus Tharox gains +2 hearts (self-heal) and
+  +2 shield for 1 round only (decays after, even if untouched — unlike
+  Chronox's permanent stacking shield).
+- Only usable while holding a charge. Consumes the current charge AND
+  grants a brand-new Titan Smash charge in its place, allowing a further
+  Titan Smash later.
+
+MANDATORY CASH-IN: after Titan Toss (or after Glory Smash grants a new
+charge), Tharox's very next actionable turn MUST be Titan Smash or Glory
+Smash — he cannot use Smash instead, and cannot Toss again while holding a
+charge. The only thing that delays this obligation is being frozen (e.g. by
+Chronox's Time Freeze) and skipping a turn — the charge simply waits, and
+the mandatory-use requirement resumes on his next actionable turn once
+unfrozen. Taking damage from other players in between does not affect the
+charge or the obligation.
+
+Max chain: Toss -> Glory Smash -> Titan Smash (3 turns, only possible once
+per match since Glory Smash is 1x). Shorter chain Toss -> Titan Smash can
+recur any number of times across the match.
+
+
+===========================================================
+3. ZERATHYS — Storm Mage
+===========================================================
+
+Two normal actions, player's free choice each turn:
+
+Charge Up (normal, no damage/target)
+- +1 to Zerathys's charge counter (max 2, caps there). Banked charge
+  persists indefinitely across turns until spent on Thunder Wrath — it does
+  not decay on its own and survives skipped turns.
+
+Thunder Wrath (normal, any target)
+- Deals damage based on CURRENT charge level, then resets the charge to 0
+  afterward:
+    0 Charge -> -1 heart
+    1 Charge -> -2 hearts
+    2 Charges -> -3 hearts
+- To repeatedly hit for -3, Zerathys must re-charge twice between each use
+  (Charge, Charge, Wrath, Charge, Charge, Wrath...). Attacking every turn
+  without charging just chips -1 heart each time.
+
+Soul Swap (special, 1x per match, targets any enemy)
+- Swaps CURRENT hearts totals between Zerathys and the target. (Smart play:
+  swap when the target has MORE hearts than Zerathys, stealing their higher
+  pool and dumping his lower total onto them.)
+- Immediately follows with a free Thunder Wrath (does not cost a separate
+  turn) against ANY target (not necessarily the same one just swapped
+  with), using whatever charge is currently banked — that charge resets to
+  0 afterward as normal.
+
+
+===========================================================
+4. AKYROS — Shadow Assassin
+===========================================================
+
+Hidden Mark (normal action, no damage)
+- Secretly marks a target. Since this is a shared single-dashboard game,
+  the player tells the moderator privately which enemy to mark; the
+  dashboard does not reveal it.
+- Multiple enemies can be marked at the same time. Marking a new target does
+  NOT remove existing marks. Marks are PERMANENT — they never expire or
+  auto-clear for the rest of the match.
+- A mark is only revealed to other players once Fatal Slash is used against
+  that marked target.
+- The player may also re-mark an already-marked target. This has no extra
+  mechanical effect — it's a legal "pass"/stalling move used purely for
+  strategy (e.g. baiting opponents, avoiding revealing info yet).
+
+Fatal Slash (normal action, every turn, any target)
+- Marked target -> -2 hearts (this reveals that the target was marked).
+- Unmarked target -> -1 heart.
+
+Dodge (passive, always on)
+- Per-attacker tracking: the very FIRST attack any given enemy character
+  EVER lands on Akyros (across the whole match, not per-round) deals 0
+  damage. Once that enemy's first hit has been negated, all of their
+  subsequent attacks on Akyros land normally for the rest of the match.
+  Each enemy character has their own independently tracked "first hit."
+
+Shadow Execution (special, 1x per match)
+- Requires at least one active mark to exist somewhere among the enemies.
+  Player chooses any currently marked enemy as the target: -3 hearts,
+  ignoring shields entirely.
+- Does NOT consume/remove the mark — it remains on that target afterward
+  (since marks never expire).
+
+
+===========================================================
+5. VELORYA — Moon Assassin
+===========================================================
+
+Turn 1 of the match
+- Velorya's very first attack must be Lunar Strike, OR she may instead open
+  directly with Lunar Eclipse (special). Moonstep is not available yet since
+  there is no prior target to compare against.
+
+Lunar Strike (normal action, any target)
+- Flat -1 heart, ignoring shields.
+
+Moonstep (normal action, any target, available from her 2nd attack onward)
+- Compares ONLY to her immediately preceding attack's target (not full
+  history):
+    Different target than her last attack -> -2 hearts, ignoring shields.
+    Same target as her last attack -> -1 heart, ignoring shields (same as
+    Lunar Strike).
+- Ping-ponging between two targets each turn nets -2 hearts every time,
+  since the target always differs from the immediately prior one.
+
+Lunar Eclipse (special, 1x per match, no target/self-buff)
+- Velorya becomes untargetable by enemy attacks. She still takes her normal
+  turns (Lunar Strike/Moonstep) while this is active.
+- After each of her attacks during this state, flip a coin:
+    Heads -> untargetable continues.
+    Tails -> untargetable ends permanently (single use, like all specials).
+
+Interaction with Athena: Velorya's untargetable status does NOT block
+Athena's Curse Strike mirrored damage (see Athena section) — because that
+damage isn't a targeted attack selection against Velorya, it's a side-effect
+mirror of damage Athena herself takes.
+
+
+===========================================================
+6. BOINGO — Chaos Trickster
+===========================================================
+
+Chaos Gamble (normal action, every turn, any target)
+- The moderator resolves a Rock-Paper-Scissors matchup between Boingo and
+  the target off-dashboard (no separate dashboard input needed — moderator
+  just applies the result):
+    Boingo wins -> target -3 hearts (Giant Explosive Punch)
+    Draw -> target -1 heart (Giant Punch)
+    Boingo loses -> 0 hearts, no effect (Miss)
+
+Jester Ball (special, 1x per match, thrown at one target)
+- Does NOT resolve immediately. The ball sits with the current holder until
+  THAT PLAYER'S OWN next turn, where handling the ball becomes their action
+  for that turn. The holder must choose one of:
+    Return to Boingo -> Boingo gains +4 hearts (self-heal).
+    Pass to a different player -> that player becomes the new holder, same
+      deal applies on their own next turn — BUT only one pass total is
+      allowed for the whole Jester Ball sequence.
+    Take it -> holder loses -4 hearts.
+- Once the ball has been passed once, the second (final) holder no longer
+  has the pass option — only Return (Boingo +4 hearts) or Take (-4 hearts to
+  self) are available to them.
+
+
+===========================================================
+7. BLADE — Blood Hunter
+===========================================================
+
+Blood Hunt (normal action, every turn, any target)
+- Tracks a consecutive-hit streak against whichever single target Blade has
+  been attacking.
+    1st hit on a given target: -1 heart.
+    Each consecutive hit on the SAME target (2nd, 3rd, ...): damage
+    increases by +1 heart per hit in the streak (-1, -2, -3, -4, -5, ...),
+    with no cap.
+- Switching to a DIFFERENT target fully resets the streak to -1 heart on the
+  new target — no memory of the previous target's streak count is kept.
+- If Blade is frozen/skips a turn (e.g. via Chronox's Time Freeze), the
+  streak does NOT reset — it pauses and resumes from where it left off once
+  he acts again against the same target.
+
+Rebirth (special, 1x per match)
+- Automatic (not player-chosen) the instant Blade would be KO'd, if the
+  special hasn't been used yet. Revives him with 2 hearts. Does not cost a
+  turn/action.
+- One-time only — if he is KO'd again after Rebirth, he is out of the match
+  for good.
+
+
+===========================================================
+8. ATHENA — Curse Guardian
+===========================================================
+
+Curse Strike (normal action, every turn, VISIBLE to all players — unlike
+Akyros's Hidden Mark)
+- Choose one player to curse. Only ONE curse is active at a time — choosing
+  a new target moves the curse there and removes it from whoever was
+  previously cursed.
+- Choosing the same already-cursed target again is a valid strategic
+  pass/no-op move.
+- Curse mechanic: while a curse is active, whenever ATHENA takes damage from
+  any attack (from anyone), the CURSED player also takes that same amount of
+  damage as a mirrored copy. Athena still takes her own damage normally too
+  — this is not a redirect away from her; both she and the cursed player
+  take the hit.
+- The mirrored damage to the cursed player still passes through THEIR OWN
+  shield normally (can be reduced/absorbed) — it does NOT ignore shields
+  (unlike Akyros's Shadow Execution, which does ignore shields).
+- Confirmed interaction: this mirrored damage is NOT blocked by Velorya's
+  Lunar Eclipse untargetable status, because it isn't a targeted attack
+  selection against the cursed player — it's a side-effect mirror triggered
+  by Athena being hit.
+
+Divine Restore (special, 1x per match)
+- Athena gains +3 hearts (self-heal) and +2 shield for 1 round only (decays
+  after, same pattern as Tharox's Glory Smash shield).
+
+Note: Athena has no other direct-damage normal ability. Curse Strike (the
+curse placement itself) is her full normal action each turn — she has no
+separate attack move.
+
+
+END OF REPORT
