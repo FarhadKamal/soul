@@ -63,6 +63,12 @@ export function applyDamage(game, log, {
   } else if (target.hearts === 0) {
     target.isKO = true;
     result.koTriggered = true;
+    // Akyros's marks (hidden and revealed) die with him - no point keeping
+    // track of them once he can never use Fatal Slash/Shadow Execution again.
+    if (target.id === 'akyros') {
+      target.special.marks.clear();
+      target.special.revealedMarks.clear();
+    }
   }
 
   // Athena curse mirror: triggered by damage actually landing on Athena.

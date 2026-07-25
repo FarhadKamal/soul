@@ -26,6 +26,7 @@ export const actions = {
     isLegal: () => true,
     execute(character, targetId, game, log) {
       const wasMarked = character.special.marks.has(targetId);
+      if (wasMarked) character.special.revealedMarks.add(targetId);
       const amount = wasMarked ? 2 : 1;
       const result = applyDamage(game, log, {
         sourceCharacterId: character.id,
@@ -42,6 +43,10 @@ export const actions = {
     isLegal: (character, game) => !character.usedSpecial && anyEnemyIsMarked(game, character.id),
     execute(character, targetId, game, log) {
       character.usedSpecial = true;
+      // Shadow Execution can only ever target an already-marked enemy (see
+      // isLegal/isValidTarget), and using it is a public, logged action - so
+      // it reveals that mark just like Fatal Slash does.
+      character.special.revealedMarks.add(targetId);
       const result = applyDamage(game, log, {
         sourceCharacterId: character.id,
         targetCharacterId: targetId,

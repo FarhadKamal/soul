@@ -1,6 +1,6 @@
 import { CHARACTERS } from '../data/characters.js';
 
-export function renderCharacterCard(character, { isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, ownerName, ownerColorClass }) {
+export function renderCharacterCard(character, { isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked, ownerName, ownerColorClass }) {
   const def = CHARACTERS[character.id];
   const card = document.createElement('div');
   card.className = 'char-card';
@@ -14,6 +14,14 @@ export function renderCharacterCard(character, { isActing, isTargetable, onTarge
   if (isTargetable) {
     card.classList.add('targetable');
     card.onclick = () => onTargetClick(character.id);
+  }
+
+  if (isRevealedMarked && !character.isKO) {
+    const markIcon = document.createElement('div');
+    markIcon.className = 'mark-reveal-icon';
+    markIcon.textContent = '🎯';
+    markIcon.title = 'Revealed mark (Akyros)';
+    card.appendChild(markIcon);
   }
 
   if (ownerName) {
@@ -123,4 +131,12 @@ export function cursedCharacterId(game) {
 export function frozenCharacterId(game) {
   const chronox = Object.values(game.characters).find((c) => c.id === 'chronox');
   return chronox && chronox.special.freezeActive ? chronox.special.freezeTargetId : null;
+}
+
+// Character ids whose Akyros mark has been publicly revealed (via a Fatal
+// Slash landing on them) - unlike the hidden mark set, this is safe to show
+// on the shared screen. Clears automatically if Akyros is KO'd.
+export function revealedMarkedCharacterIds(game) {
+  const akyros = Object.values(game.characters).find((c) => c.id === 'akyros');
+  return akyros ? akyros.special.revealedMarks : new Set();
 }
