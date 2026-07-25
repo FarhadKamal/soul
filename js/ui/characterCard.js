@@ -8,6 +8,8 @@ export function renderCharacterCard(character, { isActing, isTargetable, onTarge
   if (isActing) card.classList.add('acting');
   if (character.isKO) card.classList.add('ko');
   if (isHit) card.classList.add('hit-flash');
+  if (character.skipNextTurn && !character.isKO) card.classList.add('ice-frozen');
+  if (character.untargetable && !character.isKO) card.classList.add('eclipsed');
   if (isTargetable) {
     card.classList.add('targetable');
     card.onclick = () => onTargetClick(character.id);
@@ -20,11 +22,14 @@ export function renderCharacterCard(character, { isActing, isTargetable, onTarge
     card.appendChild(owner);
   }
 
+  const portraitWrap = document.createElement('div');
+  portraitWrap.className = 'portrait-wrap';
   const portrait = document.createElement('img');
   portrait.className = 'portrait';
   portrait.src = `assets/portraits/${character.id}.png`;
   portrait.alt = def.name;
-  card.appendChild(portrait);
+  portraitWrap.appendChild(portrait);
+  card.appendChild(portraitWrap);
 
   const name = document.createElement('div');
   name.className = 'name';
