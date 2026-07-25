@@ -1,6 +1,6 @@
 import { CHARACTERS } from '../data/characters.js';
 
-export function renderCharacterCard(character, { isActing, isTargetable, onTargetClick, isCursed, isHit, ownerName, ownerColorClass }) {
+export function renderCharacterCard(character, { isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, ownerName, ownerColorClass }) {
   const def = CHARACTERS[character.id];
   const card = document.createElement('div');
   card.className = 'char-card';
@@ -8,8 +8,9 @@ export function renderCharacterCard(character, { isActing, isTargetable, onTarge
   if (isActing) card.classList.add('acting');
   if (character.isKO) card.classList.add('ko');
   if (isHit) card.classList.add('hit-flash');
-  if (character.skipNextTurn && !character.isKO) card.classList.add('ice-frozen');
+  if (isFrozenVisual && !character.isKO) card.classList.add('ice-frozen');
   if (character.untargetable && !character.isKO) card.classList.add('eclipsed');
+  if (isCursed && !character.isKO) card.classList.add('cursed-mark');
   if (isTargetable) {
     card.classList.add('targetable');
     card.onclick = () => onTargetClick(character.id);
@@ -111,4 +112,15 @@ function statusBadges(character) {
 export function cursedCharacterId(game) {
   const athena = Object.values(game.characters).find((c) => c.id === 'athena');
   return athena ? athena.special.curseTargetCharacterId : null;
+}
+
+// Who's genuinely still under Chronox's Time Freeze, based on his ongoing
+// freezeActive state rather than the target's skipNextTurn flag - that flag
+// gets consumed to false the instant their turn is skipped, then only set
+// back to true on Chronox's NEXT turn if the continuation flip is heads.
+// Driving the visual off skipNextTurn alone made the ice effect flicker off
+// in that gap even though the freeze was still conceptually active.
+export function frozenCharacterId(game) {
+  const chronox = Object.values(game.characters).find((c) => c.id === 'chronox');
+  return chronox && chronox.special.freezeActive ? chronox.special.freezeTargetId : null;
 }

@@ -4,7 +4,7 @@ import {
   charactersActingThisTurn, hasCharacterActedThisTurn, markCharacterActed,
   endTurn, consumeSkipIfFrozen, snapshot, resolveJesterBall, isValidTarget,
 } from '../engine/turnEngine.js';
-import { renderCharacterCard, cursedCharacterId } from './characterCard.js';
+import { renderCharacterCard, cursedCharacterId, frozenCharacterId } from './characterCard.js';
 import { renderLogPanel } from './logPanel.js';
 import { showModal } from './modal.js';
 import { showCoinFlipResult, askRPSOutcome } from './coinFlipView.js';
@@ -276,6 +276,7 @@ export function renderDashboard(container, game, { onRestart }) {
     const board = document.createElement('div');
     board.className = 'board';
     const curseId = cursedCharacterId(game);
+    const frozenId = frozenCharacterId(game);
     const activePlayerId = currentPlayer(game).id;
 
     game.players.forEach((player, playerIndex) => {
@@ -297,6 +298,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isActing: character.id === activeCharId,
           isTargetable,
           isCursed: character.id === curseId,
+          isFrozenVisual: character.id === frozenId,
           isHit: flashCharacterIds.has(character.id),
           ownerName: player.name,
           ownerColorClass: PLAYER_COLOR_CLASSES[playerIndex % PLAYER_COLOR_CLASSES.length],
