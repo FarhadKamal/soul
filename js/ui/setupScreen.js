@@ -24,6 +24,7 @@ export function renderSetupScreen(container, onStart) {
     const modeSelect = document.createElement('div');
     modeSelect.className = 'mode-select';
     [
+      { key: '1v1', label: '1 vs 1', desc: 'Each player picks 1 character', players: 2, picks: 1 },
       { key: '2p', label: '2 Players', desc: 'Each player picks 2 characters', players: 2, picks: 2 },
       { key: '4p', label: '4 Players', desc: 'Each player picks 1 character', players: 4, picks: 1 },
     ].forEach((opt) => {

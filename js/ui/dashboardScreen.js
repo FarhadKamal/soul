@@ -23,6 +23,9 @@ export function renderDashboard(container, game, { onRestart }) {
   // Character ids that took real damage in the action that just resolved -
   // read once by the next render() to trigger a hit-flash, then cleared.
   let flashCharacterIds = new Set();
+  // Character ids to show a one-time divine-light burst on (Athena's
+  // Divine Restore) - same consume-once-per-render pattern as the hit flash.
+  let divineLightCharacterIds = new Set();
 
   function markHitFromResult(result) {
     if (!result) return;
@@ -156,6 +159,7 @@ export function renderDashboard(container, game, { onRestart }) {
     wrap.appendChild(renderTopBar());
     wrap.appendChild(renderBoard(activeCharId));
     flashCharacterIds = new Set(); // consumed for this render only
+    divineLightCharacterIds = new Set(); // consumed for this render only
     wrap.appendChild(renderActionPanel(activeCharId));
     wrap.appendChild(renderLogPanel(game.log));
     container.appendChild(wrap);
@@ -217,6 +221,16 @@ export function renderDashboard(container, game, { onRestart }) {
     banner.appendChild(btn);
 
     wrap.appendChild(banner);
+
+    const logHeading = document.createElement('h3');
+    logHeading.textContent = 'Full Match Log';
+    logHeading.style.margin = '0 0 8px';
+    logHeading.style.color = 'var(--gold)';
+    wrap.appendChild(logHeading);
+    const logPanel = renderLogPanel(game.log);
+    logPanel.style.maxHeight = '400px';
+    wrap.appendChild(logPanel);
+
     return wrap;
   }
 
@@ -302,6 +316,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isFrozenVisual: character.id === frozenId,
           isRevealedMarked: markedIds.has(character.id),
           isHit: flashCharacterIds.has(character.id),
+          isDivineLight: divineLightCharacterIds.has(character.id),
           ownerName: player.name,
           ownerColorClass: PLAYER_COLOR_CLASSES[playerIndex % PLAYER_COLOR_CLASSES.length],
           onTargetClick: (targetId) => handleTargetPicked(targetId),
@@ -489,6 +504,17 @@ export function renderDashboard(container, game, { onRestart }) {
     const logBefore = game.log.length;
     const result = executeAction(game, characterId, actionId, targetId);
     markHitFromResult(result);
+    // Divine Restore and Glory Smash both self-heal + self-shield the
+    // caster (Glory Smash also hits its target, already covered by the
+    // hit-flash above via markHitFromResult) - flag the caster for the
+    // same golden self-buff burst, but ONLY if the buff actually landed.
+    // applyHeal/applyShield both no-op if the caster is already KO'd (e.g.
+    // Athena's curse mirror can kill Glory Smash's caster before his own
+    // self-heal runs) - showing a "healed" sparkle on a character who just
+    // got knocked out and gained nothing would be misleading.
+    if ((actionId === 'divineRestore' || actionId === 'glorySmash') && !game.characters[characterId].isKO) {
+      divineLightCharacterIds.add(characterId);
+    }
     playPostActionSounds(actionId, targetId, logBefore);
     finishAction(characterId);
   }

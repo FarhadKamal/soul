@@ -109,6 +109,34 @@
   }
 }
 
+.char-card.divine-light {
+  animation: divine-flash 1.1s ease-out;
+}
+.char-card.divine-light::after {
+  content: '✨';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: 34px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: divine-sparkle 1.1s ease-out forwards;
+}
+@keyframes divine-flash {
+  0% {
+    box-shadow: inset 0 0 0 9999px rgba(255, 224, 130, 0.75);
+    border-color: #ffd76a;
+  }
+  100% {
+    box-shadow: inset 0 0 0 9999px rgba(255, 224, 130, 0);
+  }
+}
+@keyframes divine-sparkle {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  35% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.6); }
+}
+
 .char-card.ice-frozen {
   position: relative;
   border-color: #6fd3ff;
