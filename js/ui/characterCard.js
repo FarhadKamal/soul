@@ -1,12 +1,13 @@
 import { CHARACTERS } from '../data/characters.js';
 
-export function renderCharacterCard(character, { isActing, isTargetable, onTargetClick, isCursed, ownerName, ownerColorClass }) {
+export function renderCharacterCard(character, { isActing, isTargetable, onTargetClick, isCursed, isHit, ownerName, ownerColorClass }) {
   const def = CHARACTERS[character.id];
   const card = document.createElement('div');
   card.className = 'char-card';
   if (ownerColorClass) card.classList.add(ownerColorClass);
   if (isActing) card.classList.add('acting');
   if (character.isKO) card.classList.add('ko');
+  if (isHit) card.classList.add('hit-flash');
   if (isTargetable) {
     card.classList.add('targetable');
     card.onclick = () => onTargetClick(character.id);

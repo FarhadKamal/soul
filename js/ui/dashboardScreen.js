@@ -8,10 +8,11 @@ import { renderCharacterCard, cursedCharacterId } from './characterCard.js';
 import { renderLogPanel } from './logPanel.js';
 import { showModal } from './modal.js';
 import { showCoinFlipResult, askRPSOutcome } from './coinFlipView.js';
-import { playActionSound, playUiClick, playKO, playVictory, playCoin, playSound } from '../engine/sound.js';
+import { playActionSound, playUiClick, playKO, playVictory, playCoin, playSound, startTickLoop, stopTickLoop } from '../engine/sound.js';
 
 const COIN_FLIP_ACTIONS = new Set(['cyclonePunch']);
 const RPS_ACTIONS = new Set(['chaosGamble']);
+const ACTION_TIMER_SECONDS = 20;
 
 export function renderDashboard(container, game, { onRestart }) {
   let undoSnapshot = null;
@@ -19,6 +20,115 @@ export function renderDashboard(container, game, { onRestart }) {
   let armedAction = null;
   let jesterBallPromptShownFor = null;
   let victorySoundPlayed = false;
+  // Character ids that took real damage in the action that just resolved -
+  // read once by the next render() to trigger a hit-flash, then cleared.
+  let flashCharacterIds = new Set();
+
+  function markHitFromResult(result) {
+    if (!result) return;
+    if (result.amountDealt > 0 && result.targetCharacterId) {
+      flashCharacterIds.add(result.targetCharacterId);
+    }
+    if (result.mirrorResult) markHitFromResult(result.mirrorResult);
+  }
+  // actionTimer: { characterId, intervalId, remaining } - only runs while the
+  // active character is choosing their main action (not during target
+  // selection, coin flips, RPS, or the Jester Ball modal).
+  let actionTimer = null;
+  // targetTimer: same shape as actionTimer, but covers the "choose a target"
+  // step once an action has been armed - prevents a player from stalling
+  // indefinitely by picking an action and then never picking a target.
+  let targetTimer = null;
+
+  function clearActionTimer() {
+    if (actionTimer) {
+      clearInterval(actionTimer.intervalId);
+      actionTimer = null;
+      stopTickLoop();
+    }
+  }
+
+  function clearTargetTimer() {
+    if (targetTimer) {
+      clearInterval(targetTimer.intervalId);
+      targetTimer = null;
+      stopTickLoop();
+    }
+  }
+
+  function startTargetTimer() {
+    clearTargetTimer();
+    startTickLoop();
+    const armedAtStart = armedAction;
+    targetTimer = { remaining: ACTION_TIMER_SECONDS, intervalId: null };
+    targetTimer.intervalId = setInterval(() => {
+      targetTimer.remaining -= 1;
+      const el = document.getElementById('target-timer-count');
+      if (el) el.textContent = String(targetTimer.remaining);
+      if (targetTimer.remaining <= 0) {
+        clearTargetTimer();
+        autoPickRandomTargetFor(armedAtStart);
+      }
+    }, 1000);
+  }
+
+  function autoPickRandomTargetFor(action) {
+    if (!action || armedAction !== action) return; // stale timer, already resolved/cancelled
+    const validTargets = Object.keys(game.characters).filter((tid) => {
+      if (action.targetFilter) return action.targetFilter(tid);
+      return isValidTarget(game, action.characterId, action.actionId, tid);
+    });
+    if (validTargets.length === 0) {
+      armedAction = null;
+      render();
+      return;
+    }
+    const targetId = validTargets[Math.floor(Math.random() * validTargets.length)];
+    armedAction = null;
+    action.onPicked(targetId);
+  }
+
+  function startActionTimer(characterId) {
+    clearActionTimer();
+    startTickLoop();
+    actionTimer = { characterId, remaining: ACTION_TIMER_SECONDS, intervalId: null };
+    actionTimer.intervalId = setInterval(() => {
+      actionTimer.remaining -= 1;
+      const el = document.getElementById('action-timer-count');
+      if (el) el.textContent = String(actionTimer.remaining);
+      if (actionTimer.remaining <= 0) {
+        clearActionTimer();
+        autoPickRandomMove(characterId);
+      }
+    }, 1000);
+  }
+
+  function autoPickRandomMove(characterId) {
+    const character = game.characters[characterId];
+    if (!character || character.isKO) return;
+    const options = getUsableActions(character, game);
+    if (options.length === 0) return;
+    const action = options[Math.floor(Math.random() * options.length)];
+    pushUndoSnapshot();
+    if (!action.needsTarget) {
+      runResolvedAction(characterId, action.actionId, null, true);
+      return;
+    }
+    const validTargets = Object.keys(game.characters).filter((tid) =>
+      isValidTarget(game, characterId, action.actionId, tid)
+    );
+    if (validTargets.length === 0) return;
+    const targetId = validTargets[Math.floor(Math.random() * validTargets.length)];
+    runResolvedAction(characterId, action.actionId, targetId, true);
+  }
+
+  function pickRandomTarget(characterId, actionId) {
+    const validTargets = Object.keys(game.characters).filter((tid) =>
+      isValidTarget(game, characterId, actionId, tid)
+    );
+    if (validTargets.length === 0) return null;
+    return validTargets[Math.floor(Math.random() * validTargets.length)];
+  }
 
   function pushUndoSnapshot() {
     undoSnapshot = snapshot(game);
@@ -28,6 +138,8 @@ export function renderDashboard(container, game, { onRestart }) {
     container.innerHTML = '';
 
     if (game.phase === 'game-over') {
+      clearActionTimer();
+      clearTargetTimer();
       if (!victorySoundPlayed) {
         victorySoundPlayed = true;
         if (game.winnerPlayerId) playVictory();
@@ -43,6 +155,7 @@ export function renderDashboard(container, game, { onRestart }) {
     wrap.className = 'dashboard';
     wrap.appendChild(renderTopBar());
     wrap.appendChild(renderBoard(activeCharId));
+    flashCharacterIds = new Set(); // consumed for this render only
     wrap.appendChild(renderActionPanel(activeCharId));
     wrap.appendChild(renderLogPanel(game.log));
     container.appendChild(wrap);
@@ -127,6 +240,8 @@ export function renderDashboard(container, game, { onRestart }) {
     undoBtn.onclick = () => {
       if (!undoSnapshot) return;
       playUiClick();
+      clearActionTimer();
+      clearTargetTimer();
       Object.assign(game, undoSnapshot);
       undoSnapshot = null;
       armedAction = null;
@@ -145,7 +260,7 @@ export function renderDashboard(container, game, { onRestart }) {
         body: 'This will discard the current match and return to character setup.',
         actions: [
           { label: 'Cancel' },
-          { label: 'Restart', primary: true, onClick: onRestart },
+          { label: 'Restart', primary: true, onClick: () => { clearActionTimer(); clearTargetTimer(); onRestart(); } },
         ],
       });
     };
@@ -182,6 +297,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isActing: character.id === activeCharId,
           isTargetable,
           isCursed: character.id === curseId,
+          isHit: flashCharacterIds.has(character.id),
           ownerName: player.name,
           ownerColorClass: PLAYER_COLOR_CLASSES[playerIndex % PLAYER_COLOR_CLASSES.length],
           onTargetClick: (targetId) => handleTargetPicked(targetId),
@@ -200,6 +316,8 @@ export function renderDashboard(container, game, { onRestart }) {
     panel.className = 'action-panel';
 
     if (!activeCharId) {
+      clearActionTimer();
+      clearTargetTimer();
       panel.innerHTML = '<h3>All characters have acted. Ending turn...</h3>';
       setTimeout(() => {
         endTurn(game);
@@ -216,28 +334,51 @@ export function renderDashboard(container, game, { onRestart }) {
     panel.appendChild(h3);
 
     if (armedAction) {
+      clearActionTimer();
       const hint = document.createElement('div');
       hint.className = 'targeting-hint';
       hint.textContent = `Choose a target for ${armedAction.label}...`;
       panel.appendChild(hint);
 
+      const timerEl = document.createElement('div');
+      timerEl.className = 'action-timer';
+      timerEl.innerHTML = `Auto-target in <span id="target-timer-count">${targetTimer ? targetTimer.remaining : ACTION_TIMER_SECONDS}</span>s`;
+      panel.appendChild(timerEl);
+
       const cancelBtn = document.createElement('button');
       cancelBtn.className = 'btn btn-small';
       cancelBtn.style.marginTop = '8px';
       cancelBtn.textContent = 'Cancel';
-      cancelBtn.onclick = () => { armedAction = null; render(); };
+      cancelBtn.onclick = () => { clearTargetTimer(); armedAction = null; render(); };
       panel.appendChild(cancelBtn);
       return panel;
     }
 
+    const isBallHolderPrompt = game.jesterBall && game.jesterBall.holderCharacterId === activeCharId
+      && !hasCharacterActedThisTurn(game, activeCharId);
+
+    if (isBallHolderPrompt) {
+      clearActionTimer();
+    } else if (!actionTimer || actionTimer.characterId !== activeCharId) {
+      startActionTimer(activeCharId);
+    }
+
     const legalActions = getUsableActions(character, game);
+
+    if (!isBallHolderPrompt) {
+      const timerEl = document.createElement('div');
+      timerEl.className = 'action-timer';
+      timerEl.innerHTML = `Auto-move in <span id="action-timer-count">${actionTimer ? actionTimer.remaining : ACTION_TIMER_SECONDS}</span>s`;
+      panel.appendChild(timerEl);
+    }
+
     const btnRow = document.createElement('div');
     btnRow.className = 'action-buttons';
     legalActions.forEach((action) => {
       const btn = document.createElement('button');
       btn.className = 'btn';
       btn.textContent = action.label;
-      btn.onclick = () => { playUiClick(); onActionChosen(activeCharId, action); };
+      btn.onclick = () => { clearActionTimer(); playUiClick(); onActionChosen(activeCharId, action); };
       btnRow.appendChild(btn);
     });
     panel.appendChild(btnRow);
@@ -259,6 +400,7 @@ export function renderDashboard(container, game, { onRestart }) {
 
   function armAction(characterId, actionId, label, onPicked, targetFilter) {
     armedAction = { characterId, actionId, label, onPicked, targetFilter };
+    startTargetTimer();
     render();
   }
 
@@ -283,11 +425,12 @@ export function renderDashboard(container, game, { onRestart }) {
     }
   }
 
-  async function runResolvedAction(characterId, actionId, targetId) {
+  async function runResolvedAction(characterId, actionId, targetId, isAuto = false) {
     if (COIN_FLIP_ACTIONS.has(actionId)) {
       // Execute first (single source of truth for the roll), then reveal it.
       const logBefore = game.log.length;
-      executeAction(game, characterId, actionId, targetId);
+      const coinResult = executeAction(game, characterId, actionId, targetId);
+      markHitFromResult(coinResult);
       const rolledFlip = game.log.slice(logBefore).find((e) => e.flip)?.flip;
       playCoin();
       await showCoinFlipResult(rolledFlip || 'heads');
@@ -298,7 +441,8 @@ export function renderDashboard(container, game, { onRestart }) {
     if (RPS_ACTIONS.has(actionId)) {
       const logBefore = game.log.length;
       const outcome = await askRPSOutcome({ attackerName: CHARACTERS[characterId].name });
-      executeAction(game, characterId, actionId, targetId, outcome);
+      const rpsResult = executeAction(game, characterId, actionId, targetId, outcome);
+      markHitFromResult(rpsResult);
       if (outcome !== 'lose') {
         playPostActionSounds(actionId, targetId, logBefore);
       }
@@ -308,13 +452,30 @@ export function renderDashboard(container, game, { onRestart }) {
     if (actionId === 'soulSwap') {
       executeAction(game, characterId, 'soulSwap', targetId);
       playActionSound('soulSwap');
+
+      if (isAuto) {
+        // The whole move was auto-picked (turn timer expired) - the free
+        // follow-up must also resolve automatically, otherwise it would sit
+        // armed waiting for a target click that may never come.
+        const freeTargetId = pickRandomTarget(characterId, 'soulSwapWrath');
+        if (freeTargetId) {
+          const logBefore2 = game.log.length;
+          const wrathResult = executeAction(game, characterId, 'soulSwapWrath', freeTargetId);
+          markHitFromResult(wrathResult);
+          playPostActionSounds('soulSwapWrath', freeTargetId, logBefore2);
+        }
+        finishAction(characterId);
+        return;
+      }
+
       // Do NOT mark Zerathys as acted yet - he still owes the free Thunder
       // Wrath follow-up, and marking him now would let the turn engine
       // advance to the player's other character mid-chain.
       armAction(characterId, 'soulSwapWrath', 'Thunder Wrath (free, from Soul Swap)', (freeTargetId) => {
         pushUndoSnapshot();
         const logBefore2 = game.log.length;
-        executeAction(game, characterId, 'soulSwapWrath', freeTargetId);
+        const wrathResult2 = executeAction(game, characterId, 'soulSwapWrath', freeTargetId);
+        markHitFromResult(wrathResult2);
         playPostActionSounds('soulSwapWrath', freeTargetId, logBefore2);
         finishAction(characterId);
       });
@@ -322,7 +483,8 @@ export function renderDashboard(container, game, { onRestart }) {
     }
 
     const logBefore = game.log.length;
-    executeAction(game, characterId, actionId, targetId);
+    const result = executeAction(game, characterId, actionId, targetId);
+    markHitFromResult(result);
     playPostActionSounds(actionId, targetId, logBefore);
     finishAction(characterId);
   }
@@ -341,6 +503,7 @@ export function renderDashboard(container, game, { onRestart }) {
 
   function handleTargetPicked(targetId) {
     if (!armedAction || !isLegalTarget(targetId)) return;
+    clearTargetTimer();
     const { onPicked } = armedAction;
     armedAction = null;
     onPicked(targetId);
@@ -416,7 +579,8 @@ export function renderDashboard(container, game, { onRestart }) {
   function finishJesterBall(choice, targetId) {
     const holderId = game.jesterBall.holderCharacterId;
     const logBefore = game.log.length;
-    resolveJesterBall(game, holderId, choice, targetId);
+    const ballResult = resolveJesterBall(game, holderId, choice, targetId);
+    markHitFromResult(ballResult);
     jesterBallPromptShownFor = null;
     if (choice === 'pass') playSound('kick');
     else if (choice === 'take') {
