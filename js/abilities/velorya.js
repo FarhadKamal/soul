@@ -36,7 +36,11 @@ export const actions = {
     needsTarget: true,
     isLegal: (character) => character.special.hasActedOnce,
     execute(character, targetId, game, log) {
-      const isNewTarget = character.special.lastTargetId !== targetId;
+      // No bonus on her first-ever real attack (e.g. opened with Lunar
+      // Eclipse instead of Lunar Strike) - lastTargetId is null then, and
+      // that must NOT count as "a different target" for the -2 bonus.
+      const isNewTarget = character.special.lastTargetId !== null
+        && character.special.lastTargetId !== targetId;
       const amount = isNewTarget ? 2 : 1;
       character.special.lastTargetId = targetId;
       const result = applyDamage(game, log, {
