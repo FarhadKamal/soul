@@ -30,6 +30,9 @@ export function renderDashboard(container, game, { onRestart }) {
   // Character ids to show a one-time resurrection burst on (Blade's
   // Rebirth) - same consume-once-per-render pattern as the hit flash.
   let reviveCharacterIds = new Set();
+  // Character ids to shake for a "hard hit" moment (Boingo RPS win,
+  // Chronox Cyclone Punch on heads) - same consume-once-per-render pattern.
+  let shakeCharacterIds = new Set();
 
   function markHitFromResult(result) {
     if (!result) return;
@@ -165,6 +168,7 @@ export function renderDashboard(container, game, { onRestart }) {
     flashCharacterIds = new Set(); // consumed for this render only
     divineLightCharacterIds = new Set(); // consumed for this render only
     reviveCharacterIds = new Set(); // consumed for this render only
+    shakeCharacterIds = new Set(); // consumed for this render only
     wrap.appendChild(renderActionPanel(activeCharId));
     wrap.appendChild(renderLogPanel(game.log));
     container.appendChild(wrap);
@@ -323,6 +327,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isHit: flashCharacterIds.has(character.id),
           isDivineLight: divineLightCharacterIds.has(character.id),
           isRevived: reviveCharacterIds.has(character.id),
+          isShaking: shakeCharacterIds.has(character.id),
           ownerName: player.name,
           ownerColorClass: PLAYER_COLOR_CLASSES[playerIndex % PLAYER_COLOR_CLASSES.length],
           onTargetClick: (targetId) => handleTargetPicked(targetId),
@@ -462,6 +467,10 @@ export function renderDashboard(container, game, { onRestart }) {
       const logBefore = game.log.length;
       const coinResult = executeAction(game, characterId, actionId, targetId);
       markHitFromResult(coinResult);
+      const rolledFlip = game.log.slice(logBefore).find((e) => e.flip)?.flip;
+      if (actionId === 'cyclonePunch' && rolledFlip === 'heads' && !coinResult?.dodged) {
+        shakeCharacterIds.add(targetId);
+      }
       playCoin();
       playPostActionSounds(actionId, targetId, logBefore);
       return finishAction(characterId);
@@ -477,6 +486,9 @@ export function renderDashboard(container, game, { onRestart }) {
       await showRPSReveal(systemChoice, defenderChoice, outcome, { attackerName, defenderName });
       const rpsResult = executeAction(game, characterId, actionId, targetId, outcome);
       markHitFromResult(rpsResult);
+      if (outcome === 'win' && !rpsResult?.dodged) {
+        shakeCharacterIds.add(targetId);
+      }
       if (outcome !== 'lose') {
         playPostActionSounds(actionId, targetId, logBefore);
       }
@@ -529,6 +541,9 @@ export function renderDashboard(container, game, { onRestart }) {
     // got knocked out and gained nothing would be misleading.
     if ((actionId === 'divineRestore' || actionId === 'glorySmash') && !game.characters[characterId].isKO) {
       divineLightCharacterIds.add(characterId);
+    }
+    if ((actionId === 'titanSmash' || actionId === 'glorySmash') && targetId && !result?.dodged && result?.amountDealt > 0) {
+      shakeCharacterIds.add(targetId);
     }
     playPostActionSounds(actionId, targetId, logBefore);
     finishAction(characterId);

@@ -1,6 +1,6 @@
 import { CHARACTERS } from '../data/characters.js';
 
-export function renderCharacterCard(character, { isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked, isDivineLight, isRevived, ownerName, ownerColorClass }) {
+export function renderCharacterCard(character, { isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked, isDivineLight, isRevived, isShaking, ownerName, ownerColorClass }) {
   const def = CHARACTERS[character.id];
   const card = document.createElement('div');
   card.className = 'char-card';
@@ -13,6 +13,7 @@ export function renderCharacterCard(character, { isActing, isTargetable, onTarge
   if (isCursed && !character.isKO) card.classList.add('cursed-mark');
   if (isDivineLight && !character.isKO) card.classList.add('divine-light');
   if (isRevived && !character.isKO) card.classList.add('revive-burst');
+  if (isShaking && !character.isKO) card.classList.add('hard-shake');
   if (isTargetable) {
     card.classList.add('targetable');
     card.onclick = () => onTargetClick(character.id);
