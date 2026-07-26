@@ -33,6 +33,12 @@ export function renderDashboard(container, game, { onRestart }) {
   // Character ids to shake for a "hard hit" moment (Boingo RPS win,
   // Chronox Cyclone Punch on heads) - same consume-once-per-render pattern.
   let shakeCharacterIds = new Set();
+  // Character ids to show a one-time claw-scratch slash on (Akyros's
+  // Shadow Execution) - same consume-once-per-render pattern.
+  let clawCharacterIds = new Set();
+  // Character ids to show a one-time dodge-lean skew on (Akyros's Dodge) -
+  // same consume-once-per-render pattern.
+  let dodgeCharacterIds = new Set();
 
   function markHitFromResult(result) {
     if (!result) return;
@@ -169,6 +175,8 @@ export function renderDashboard(container, game, { onRestart }) {
     divineLightCharacterIds = new Set(); // consumed for this render only
     reviveCharacterIds = new Set(); // consumed for this render only
     shakeCharacterIds = new Set(); // consumed for this render only
+    clawCharacterIds = new Set(); // consumed for this render only
+    dodgeCharacterIds = new Set(); // consumed for this render only
     wrap.appendChild(renderActionPanel(activeCharId));
     wrap.appendChild(renderLogPanel(game.log));
     container.appendChild(wrap);
@@ -328,6 +336,8 @@ export function renderDashboard(container, game, { onRestart }) {
           isDivineLight: divineLightCharacterIds.has(character.id),
           isRevived: reviveCharacterIds.has(character.id),
           isShaking: shakeCharacterIds.has(character.id),
+          isClawed: clawCharacterIds.has(character.id),
+          isDodging: dodgeCharacterIds.has(character.id),
           ownerName: player.name,
           ownerColorClass: PLAYER_COLOR_CLASSES[playerIndex % PLAYER_COLOR_CLASSES.length],
           onTargetClick: (targetId) => handleTargetPicked(targetId),
@@ -448,6 +458,7 @@ export function renderDashboard(container, game, { onRestart }) {
     const wasDodged = recentLog.some((e) => e.type === 'dodge' && e.targetCharacterId === targetId);
     if (wasDodged) {
       playSound('dodge');
+      dodgeCharacterIds.add(targetId);
       return;
     }
     playActionSound(actionId);
@@ -544,6 +555,10 @@ export function renderDashboard(container, game, { onRestart }) {
     }
     if ((actionId === 'titanSmash' || actionId === 'glorySmash') && targetId && !result?.dodged && result?.amountDealt > 0) {
       shakeCharacterIds.add(targetId);
+    }
+    if (actionId === 'shadowExecution' && targetId && !result?.dodged && result?.amountDealt > 0) {
+      shakeCharacterIds.add(targetId);
+      clawCharacterIds.add(targetId);
     }
     playPostActionSounds(actionId, targetId, logBefore);
     finishAction(characterId);
