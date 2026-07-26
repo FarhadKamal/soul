@@ -12,12 +12,16 @@ function beats(a, b) {
   );
 }
 
-export function playRPS() {
-  const a = RPS_CHOICES[Math.floor(Math.random() * 3)];
-  const b = RPS_CHOICES[Math.floor(Math.random() * 3)];
-  let outcome;
-  if (a === b) outcome = 'draw';
-  else if (beats(a, b)) outcome = 'win';
-  else outcome = 'lose';
-  return { attackerChoice: a, defenderChoice: b, outcome };
+// The system (standing in for Boingo) secretly commits to a hidden RPS
+// choice before the defending player reveals theirs.
+export function pickSystemRPS() {
+  return RPS_CHOICES[Math.floor(Math.random() * 3)];
+}
+
+// Resolves the real RPS outcome once both choices are known. Outcome is
+// from the system/Boingo's perspective: 'win' means Boingo's throw beats
+// the defender's, 'lose' means the defender's beats Boingo's.
+export function resolveRPS(systemChoice, defenderChoice) {
+  if (systemChoice === defenderChoice) return 'draw';
+  return beats(systemChoice, defenderChoice) ? 'win' : 'lose';
 }

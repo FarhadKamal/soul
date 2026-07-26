@@ -7,7 +7,8 @@ import {
 import { renderCharacterCard, cursedCharacterId, frozenCharacterId, revealedMarkedCharacterIds } from './characterCard.js';
 import { renderLogPanel } from './logPanel.js';
 import { showModal } from './modal.js';
-import { showCoinFlipResult, askRPSOutcome } from './coinFlipView.js';
+import { askDefenderRPSChoice, showRPSReveal } from './coinFlipView.js';
+import { pickSystemRPS, resolveRPS } from '../engine/random.js';
 import { playActionSound, playUiClick, playKO, playVictory, playCoin, playSound, startTickLoop, stopTickLoop } from '../engine/sound.js';
 
 const COIN_FLIP_ACTIONS = new Set(['cyclonePunch']);
@@ -26,6 +27,9 @@ export function renderDashboard(container, game, { onRestart }) {
   // Character ids to show a one-time divine-light burst on (Athena's
   // Divine Restore) - same consume-once-per-render pattern as the hit flash.
   let divineLightCharacterIds = new Set();
+  // Character ids to show a one-time resurrection burst on (Blade's
+  // Rebirth) - same consume-once-per-render pattern as the hit flash.
+  let reviveCharacterIds = new Set();
 
   function markHitFromResult(result) {
     if (!result) return;
@@ -160,6 +164,7 @@ export function renderDashboard(container, game, { onRestart }) {
     wrap.appendChild(renderBoard(activeCharId));
     flashCharacterIds = new Set(); // consumed for this render only
     divineLightCharacterIds = new Set(); // consumed for this render only
+    reviveCharacterIds = new Set(); // consumed for this render only
     wrap.appendChild(renderActionPanel(activeCharId));
     wrap.appendChild(renderLogPanel(game.log));
     container.appendChild(wrap);
@@ -317,6 +322,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isRevealedMarked: markedIds.has(character.id),
           isHit: flashCharacterIds.has(character.id),
           isDivineLight: divineLightCharacterIds.has(character.id),
+          isRevived: reviveCharacterIds.has(character.id),
           ownerName: player.name,
           ownerColorClass: PLAYER_COLOR_CLASSES[playerIndex % PLAYER_COLOR_CLASSES.length],
           onTargetClick: (targetId) => handleTargetPicked(targetId),
@@ -425,9 +431,13 @@ export function renderDashboard(container, game, { onRestart }) {
 
   function playPostActionSounds(actionId, targetId, logBefore) {
     const recentLog = logBefore !== undefined ? game.log.slice(logBefore) : [];
-    const wasRevived = recentLog.some((e) => e.type === 'rebirth' && e.targetCharacterId === targetId);
-    if (wasRevived) {
+    // Don't assume the revived character is the direct target - Athena's
+    // curse mirror can trigger Blade's Rebirth on a completely different
+    // character (the cursed player, not whoever was actually attacked).
+    const rebirthEntry = recentLog.find((e) => e.type === 'rebirth');
+    if (rebirthEntry) {
       playSound('rebirth');
+      reviveCharacterIds.add(rebirthEntry.targetCharacterId);
       return;
     }
     const wasDodged = recentLog.some((e) => e.type === 'dodge' && e.targetCharacterId === targetId);
@@ -446,20 +456,25 @@ export function renderDashboard(container, game, { onRestart }) {
 
   async function runResolvedAction(characterId, actionId, targetId, isAuto = false) {
     if (COIN_FLIP_ACTIONS.has(actionId)) {
-      // Execute first (single source of truth for the roll), then reveal it.
+      // The coin flip still happens internally (decides 1 vs 2 damage) but
+      // no heads/tails modal - the damage number and hit-flash already make
+      // the outcome obvious without an extra click-through step.
       const logBefore = game.log.length;
       const coinResult = executeAction(game, characterId, actionId, targetId);
       markHitFromResult(coinResult);
-      const rolledFlip = game.log.slice(logBefore).find((e) => e.flip)?.flip;
       playCoin();
-      await showCoinFlipResult(rolledFlip || 'heads');
       playPostActionSounds(actionId, targetId, logBefore);
       return finishAction(characterId);
     }
 
     if (RPS_ACTIONS.has(actionId)) {
       const logBefore = game.log.length;
-      const outcome = await askRPSOutcome({ attackerName: CHARACTERS[characterId].name });
+      const attackerName = CHARACTERS[characterId].name;
+      const defenderName = CHARACTERS[targetId].name;
+      const systemChoice = pickSystemRPS(); // hidden until the reveal below
+      const defenderChoice = await askDefenderRPSChoice({ defenderName });
+      const outcome = resolveRPS(systemChoice, defenderChoice);
+      await showRPSReveal(systemChoice, defenderChoice, outcome, { attackerName, defenderName });
       const rpsResult = executeAction(game, characterId, actionId, targetId, outcome);
       markHitFromResult(rpsResult);
       if (outcome !== 'lose') {
@@ -573,36 +588,77 @@ export function renderDashboard(container, game, { onRestart }) {
     if (jesterBallPromptShownFor === holderId) return;
     jesterBallPromptShownFor = holderId;
 
-    const canPass = game.jesterBall.canPass;
-    const actionsList = [
+    const isValidPassTarget = (targetId) => {
+      const t = game.characters[targetId];
+      // Can't pass to self, and passing back to Boingo (the original
+      // thrower) is already covered by "Return" - offering it here too
+      // would let Boingo end up "holding" his own ball.
+      return t && !t.isKO && t.id !== holderId && t.id !== game.jesterBall.thrownByCharacterId;
+    };
+    const hasValidPassTarget = Object.keys(game.characters).some(isValidPassTarget);
+    const canPass = game.jesterBall.canPass && hasValidPassTarget;
+
+    const rawActions = [
       { label: 'Return to Boingo', onClick: () => finishJesterBall('return_') },
     ];
     if (canPass) {
-      actionsList.push({
+      rawActions.push({
         label: 'Pass to another player',
         onClick: () => {
           armAction(holderId, '__jesterPass', 'Pass Jester Ball', (targetId) => {
             pushUndoSnapshot();
             finishJesterBall('pass', targetId);
-          }, (targetId) => {
-            const t = game.characters[targetId];
-            // Can't pass to self, and passing back to Boingo (the original
-            // thrower) is already covered by "Return" - offering it here too
-            // would let Boingo end up "holding" his own ball.
-            return t && !t.isKO && t.id !== holderId && t.id !== game.jesterBall.thrownByCharacterId;
-          });
+          }, isValidPassTarget);
         },
       });
     }
-    actionsList.push({ label: 'Take it (-4 hearts)', onClick: () => finishJesterBall('take') });
+    rawActions.push({ label: 'Take it (-4 hearts)', onClick: () => finishJesterBall('take') });
 
     setTimeout(() => {
       pushUndoSnapshot();
+
+      let remaining = ACTION_TIMER_SECONDS;
+      let settled = false;
+      const body = document.createElement('div');
+      body.innerHTML = `
+        <p>Choose what to do with it.</p>
+        <div class="action-timer">Auto-choice in <span id="jesterball-timer-count">${remaining}</span>s</div>
+      `;
+
+      const wrappedActions = rawActions.map((a) => ({
+        ...a,
+        onClick: () => {
+          if (settled) return;
+          settled = true;
+          clearInterval(intervalId);
+          stopTickLoop();
+          a.onClick();
+        },
+      }));
+
       showModal({
         title: `${CHARACTERS[holderId].name} is holding the Jester Ball`,
-        body: 'Choose what to do with it.',
-        actions: actionsList,
+        body,
+        actions: wrappedActions,
       });
+
+      startTickLoop();
+      const intervalId = setInterval(() => {
+        remaining -= 1;
+        const el = document.getElementById('jesterball-timer-count');
+        if (el) el.textContent = String(remaining);
+        if (remaining <= 0) {
+          settled = true;
+          clearInterval(intervalId);
+          stopTickLoop();
+          document.querySelector('.modal-overlay')?.remove();
+          // Call the RAW (unwrapped) action directly - the wrapped versions
+          // guard on `settled`, which is already true by this point and
+          // would otherwise silently swallow this auto-pick.
+          const choice = rawActions[Math.floor(Math.random() * rawActions.length)];
+          choice.onClick();
+        }
+      }, 1000);
     }, 0);
   }
 
@@ -614,9 +670,10 @@ export function renderDashboard(container, game, { onRestart }) {
     jesterBallPromptShownFor = null;
     if (choice === 'pass') playSound('kick');
     else if (choice === 'take') {
-      const wasRevived = game.log.slice(logBefore).some((e) => e.type === 'rebirth' && e.targetCharacterId === holderId);
-      if (wasRevived) {
+      const rebirthEntry = game.log.slice(logBefore).find((e) => e.type === 'rebirth');
+      if (rebirthEntry) {
         playSound('rebirth');
+        reviveCharacterIds.add(rebirthEntry.targetCharacterId);
       } else {
         playSound('smash'); // the ball explodes on the holder
         const holder = game.characters[holderId];

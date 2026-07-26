@@ -59,6 +59,15 @@ export function applyDamage(game, log, {
     target.special.rebirthUsed = true;
     target.usedSpecial = true;
     result.revived = true;
+    // Comes back fresh: clear any lingering negative status rather than
+    // carrying it over from the moment he died.
+    target.skipNextTurn = false;
+    target.special.streakTargetId = null;
+    target.special.streakCount = 0;
+    const athena = Object.values(game.characters).find(
+      (c) => c.id === 'athena' && c.special.curseTargetCharacterId === target.id
+    );
+    if (athena) athena.special.curseTargetCharacterId = null;
     log.push({ type: 'rebirth', targetCharacterId });
   } else if (target.hearts === 0) {
     target.isKO = true;
