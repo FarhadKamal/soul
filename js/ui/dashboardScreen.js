@@ -4,22 +4,20 @@ import {
   charactersActingThisTurn, hasCharacterActedThisTurn, markCharacterActed,
   endTurn, consumeSkipIfFrozen, snapshot, resolveJesterBall, isValidTarget,
 } from '../engine/turnEngine.js';
-import { renderCharacterCard, cursedCharacterId, frozenCharacterId, revealedMarkedCharacterIds } from './characterCard.js';
+import { renderCharacterCard, cursedCharacterId, frozenCharacterId, revealedMarkedCharacterIds, jesterBallHolderCharacterId } from './characterCard.js';
 import { renderLogPanel } from './logPanel.js';
 import { showModal } from './modal.js';
-import { askDefenderRPSChoice, showRPSReveal } from './coinFlipView.js';
-import { pickSystemRPS, resolveRPS } from '../engine/random.js';
+import { rollChaosGamble } from '../engine/random.js';
 import { playActionSound, playUiClick, playKO, playVictory, playCoin, playSound, startTickLoop, stopTickLoop } from '../engine/sound.js';
 
 const COIN_FLIP_ACTIONS = new Set(['cyclonePunch']);
-const RPS_ACTIONS = new Set(['chaosGamble']);
+const CHAOS_GAMBLE_ACTIONS = new Set(['chaosGamble']);
 const ACTION_TIMER_SECONDS = 20;
 
 export function renderDashboard(container, game, { onRestart }) {
   let undoSnapshot = null;
   // armedAction: { characterId, actionId, label, targetFilter, onPicked }
   let armedAction = null;
-  let jesterBallPromptShownFor = null;
   let victorySoundPlayed = false;
   // Character ids that took real damage in the action that just resolved -
   // read once by the next render() to trigger a hit-flash, then cleared.
@@ -39,6 +37,9 @@ export function renderDashboard(container, game, { onRestart }) {
   // Character ids to show a one-time dodge-lean skew on (Akyros's Dodge) -
   // same consume-once-per-render pattern.
   let dodgeCharacterIds = new Set();
+  // Character ids to show a one-time smoke/scorch burst on (Jester Ball
+  // exploding on whoever "Takes" it) - same consume-once-per-render pattern.
+  let smokeCharacterIds = new Set();
 
   function markHitFromResult(result) {
     if (!result) return;
@@ -55,6 +56,13 @@ export function renderDashboard(container, game, { onRestart }) {
   // step once an action has been armed - prevents a player from stalling
   // indefinitely by picking an action and then never picking a target.
   let targetTimer = null;
+  // ballTimer: covers the window where the holder can drag/tap the Jester
+  // Ball to Return/Pass it, before it auto-explodes (Take) on timeout.
+  let ballTimer = null;
+  // Whether the holder has tapped the ball icon (touch fallback for drag) -
+  // gates card taps so an unrelated tap can't accidentally resolve the ball.
+  // Native mouse drag-and-drop works regardless of this flag.
+  let ballTapArmed = false;
 
   function clearActionTimer() {
     if (actionTimer) {
@@ -70,6 +78,29 @@ export function renderDashboard(container, game, { onRestart }) {
       targetTimer = null;
       stopTickLoop();
     }
+  }
+
+  function clearBallTimer() {
+    if (ballTimer) {
+      clearInterval(ballTimer.intervalId);
+      ballTimer = null;
+      stopTickLoop();
+    }
+  }
+
+  function startBallTimer(holderId) {
+    clearBallTimer();
+    startTickLoop();
+    ballTimer = { holderId, remaining: ACTION_TIMER_SECONDS, intervalId: null };
+    ballTimer.intervalId = setInterval(() => {
+      ballTimer.remaining -= 1;
+      const el = document.getElementById('ball-timer-count');
+      if (el) el.textContent = String(ballTimer.remaining);
+      if (ballTimer.remaining <= 0) {
+        clearBallTimer();
+        explodeBallAsTake(holderId);
+      }
+    }, 1000);
   }
 
   function startTargetTimer() {
@@ -165,7 +196,6 @@ export function renderDashboard(container, game, { onRestart }) {
     }
 
     const activeCharId = getActingCharacterId();
-    maybeShowJesterBallPrompt(activeCharId);
 
     const wrap = document.createElement('div');
     wrap.className = 'dashboard';
@@ -177,6 +207,7 @@ export function renderDashboard(container, game, { onRestart }) {
     shakeCharacterIds = new Set(); // consumed for this render only
     clawCharacterIds = new Set(); // consumed for this render only
     dodgeCharacterIds = new Set(); // consumed for this render only
+    smokeCharacterIds = new Set(); // consumed for this render only
     wrap.appendChild(renderActionPanel(activeCharId));
     wrap.appendChild(renderLogPanel(game.log));
     container.appendChild(wrap);
@@ -276,7 +307,7 @@ export function renderDashboard(container, game, { onRestart }) {
       Object.assign(game, undoSnapshot);
       undoSnapshot = null;
       armedAction = null;
-      jesterBallPromptShownFor = null;
+      ballTapArmed = false;
       render();
     };
     actions.appendChild(undoBtn);
@@ -309,7 +340,15 @@ export function renderDashboard(container, game, { onRestart }) {
     const curseId = cursedCharacterId(game);
     const frozenId = frozenCharacterId(game);
     const markedIds = revealedMarkedCharacterIds(game);
+    const ballHolderId = jesterBallHolderCharacterId(game);
     const activePlayerId = currentPlayer(game).id;
+
+    // The ball is resolvable right now if its holder is the active character
+    // and hasn't acted yet this turn - drives drop-target highlighting on
+    // every card and makes the holder's own ball icon grabbable.
+    const ballResolvable = ballHolderId
+      && ballHolderId === activeCharId
+      && !hasCharacterActedThisTurn(game, ballHolderId);
 
     game.players.forEach((player, playerIndex) => {
       const group = document.createElement('div');
@@ -326,6 +365,8 @@ export function renderDashboard(container, game, { onRestart }) {
       player.characterIds.forEach((charId) => {
         const character = game.characters[charId];
         const isTargetable = !!armedAction && isLegalTarget(character.id);
+        const isBallDropTarget = ballResolvable && isValidBallDropTarget(ballHolderId, character.id);
+        const isOwnBallCard = ballResolvable && character.id === ballHolderId;
         const card = renderCharacterCard(character, {
           isActing: character.id === activeCharId,
           isTargetable,
@@ -338,6 +379,14 @@ export function renderDashboard(container, game, { onRestart }) {
           isShaking: shakeCharacterIds.has(character.id),
           isClawed: clawCharacterIds.has(character.id),
           isDodging: dodgeCharacterIds.has(character.id),
+          isSmoking: smokeCharacterIds.has(character.id),
+          isHoldingBall: character.id === ballHolderId,
+          isBallDropTarget,
+          isBallClickTarget: isBallDropTarget && ballTapArmed,
+          isBallArmed: isOwnBallCard && ballTapArmed,
+          onBallDrop: (targetId) => handleBallDrop(ballHolderId, targetId),
+          onBallIconTap: isOwnBallCard ? () => { ballTapArmed = !ballTapArmed; render(); } : undefined,
+          onBallIconDragStart: isOwnBallCard ? () => {} : undefined,
           ownerName: player.name,
           ownerColorClass: PLAYER_COLOR_CLASSES[playerIndex % PLAYER_COLOR_CLASSES.length],
           onTargetClick: (targetId) => handleTargetPicked(targetId),
@@ -399,18 +448,30 @@ export function renderDashboard(container, game, { onRestart }) {
 
     if (isBallHolderPrompt) {
       clearActionTimer();
-    } else if (!actionTimer || actionTimer.characterId !== activeCharId) {
-      startActionTimer(activeCharId);
-    }
+      if (!ballTimer || ballTimer.holderId !== activeCharId) {
+        startBallTimer(activeCharId);
+      }
+      const hint = document.createElement('div');
+      hint.className = 'targeting-hint';
+      hint.textContent = 'Holding the Jester Ball: drag/tap 💣 onto Boingo (Return) or another player (Pass) - or just pick an action below and it explodes.';
+      panel.appendChild(hint);
 
-    const legalActions = getUsableActions(character, game);
-
-    if (!isBallHolderPrompt) {
+      const timerEl = document.createElement('div');
+      timerEl.className = 'action-timer';
+      timerEl.innerHTML = `Auto-explode in <span id="ball-timer-count">${ballTimer ? ballTimer.remaining : ACTION_TIMER_SECONDS}</span>s`;
+      panel.appendChild(timerEl);
+    } else {
+      clearBallTimer();
+      if (!actionTimer || actionTimer.characterId !== activeCharId) {
+        startActionTimer(activeCharId);
+      }
       const timerEl = document.createElement('div');
       timerEl.className = 'action-timer';
       timerEl.innerHTML = `Auto-move in <span id="action-timer-count">${actionTimer ? actionTimer.remaining : ACTION_TIMER_SECONDS}</span>s`;
       panel.appendChild(timerEl);
     }
+
+    const legalActions = getUsableActions(character, game);
 
     const btnRow = document.createElement('div');
     btnRow.className = 'action-buttons';
@@ -418,7 +479,12 @@ export function renderDashboard(container, game, { onRestart }) {
       const btn = document.createElement('button');
       btn.className = 'btn';
       btn.textContent = action.label;
-      btn.onclick = () => { clearActionTimer(); playUiClick(); onActionChosen(activeCharId, action); };
+      btn.onclick = () => {
+        clearActionTimer();
+        playUiClick();
+        if (isBallHolderPrompt) explodeBallAsTake(activeCharId, { skipRender: true });
+        onActionChosen(activeCharId, action);
+      };
       btnRow.appendChild(btn);
     });
     panel.appendChild(btnRow);
@@ -487,14 +553,11 @@ export function renderDashboard(container, game, { onRestart }) {
       return finishAction(characterId);
     }
 
-    if (RPS_ACTIONS.has(actionId)) {
+    if (CHAOS_GAMBLE_ACTIONS.has(actionId)) {
+      // Pure probability roll (33% 1-hit / 33% 3-hit / 34% miss) - no
+      // moderator/defender interaction or reveal screen needed.
       const logBefore = game.log.length;
-      const attackerName = CHARACTERS[characterId].name;
-      const defenderName = CHARACTERS[targetId].name;
-      const systemChoice = pickSystemRPS(); // hidden until the reveal below
-      const defenderChoice = await askDefenderRPSChoice({ defenderName });
-      const outcome = resolveRPS(systemChoice, defenderChoice);
-      await showRPSReveal(systemChoice, defenderChoice, outcome, { attackerName, defenderName });
+      const outcome = rollChaosGamble();
       const rpsResult = executeAction(game, characterId, actionId, targetId, outcome);
       markHitFromResult(rpsResult);
       if (outcome === 'win' && !rpsResult?.dodged) {
@@ -502,6 +565,8 @@ export function renderDashboard(container, game, { onRestart }) {
       }
       if (outcome !== 'lose') {
         playPostActionSounds(actionId, targetId, logBefore);
+      } else {
+        playSound('miss');
       }
       return finishAction(characterId);
     }
@@ -588,9 +653,7 @@ export function renderDashboard(container, game, { onRestart }) {
     const acting = charactersActingThisTurn(game);
     for (const character of acting) {
       if (hasCharacterActedThisTurn(game, character.id)) continue;
-      if (game.jesterBall && game.jesterBall.holderCharacterId === character.id) {
-        return character.id; // let the ball prompt resolve their turn instead of normal actions
-      }
+      const isBallHolder = game.jesterBall && game.jesterBall.holderCharacterId === character.id;
       if (consumeSkipIfFrozen(character)) {
         game.log.push({ type: 'passive', characterId: character.id, text: `${CHARACTERS[character.id].name} is frozen and skips their turn.` });
         markCharacterActed(game, character.id);
@@ -600,7 +663,9 @@ export function renderDashboard(container, game, { onRestart }) {
         game.turnStartFiredFor.add(character.id);
         beginCharacterTurn(character, game, game.log);
       }
-      if (getUsableActions(character, game).length === 0) {
+      // A ball holder can always resolve the ball even with zero normal
+      // actions available, so don't auto-skip them in that case.
+      if (!isBallHolder && getUsableActions(character, game).length === 0) {
         game.log.push({ type: 'passive', characterId: character.id, text: `${CHARACTERS[character.id].name} has no valid targets and skips their turn.` });
         markCharacterActed(game, character.id);
         continue;
@@ -610,94 +675,45 @@ export function renderDashboard(container, game, { onRestart }) {
     return null;
   }
 
-  function maybeShowJesterBallPrompt(activeCharId) {
-    if (!game.jesterBall) return;
-    const holderId = game.jesterBall.holderCharacterId;
-    if (activeCharId !== holderId) return;
-    if (hasCharacterActedThisTurn(game, holderId)) return;
-    if (jesterBallPromptShownFor === holderId) return;
-    jesterBallPromptShownFor = holderId;
-
-    const isValidPassTarget = (targetId) => {
-      const t = game.characters[targetId];
-      // Can't pass to self, and passing back to Boingo (the original
-      // thrower) is already covered by "Return" - offering it here too
-      // would let Boingo end up "holding" his own ball.
-      return t && !t.isKO && t.id !== holderId && t.id !== game.jesterBall.thrownByCharacterId;
-    };
-    const hasValidPassTarget = Object.keys(game.characters).some(isValidPassTarget);
-    const canPass = game.jesterBall.canPass && hasValidPassTarget;
-
-    const rawActions = [
-      { label: 'Return to Boingo', onClick: () => finishJesterBall('return_') },
-    ];
-    if (canPass) {
-      rawActions.push({
-        label: 'Pass to another player',
-        onClick: () => {
-          armAction(holderId, '__jesterPass', 'Pass Jester Ball', (targetId) => {
-            pushUndoSnapshot();
-            finishJesterBall('pass', targetId);
-          }, isValidPassTarget);
-        },
-      });
-    }
-    rawActions.push({ label: 'Take it (-4 hearts)', onClick: () => finishJesterBall('take') });
-
-    setTimeout(() => {
-      pushUndoSnapshot();
-
-      let remaining = ACTION_TIMER_SECONDS;
-      let settled = false;
-      const body = document.createElement('div');
-      body.innerHTML = `
-        <p>Choose what to do with it.</p>
-        <div class="action-timer">Auto-choice in <span id="jesterball-timer-count">${remaining}</span>s</div>
-      `;
-
-      const wrappedActions = rawActions.map((a) => ({
-        ...a,
-        onClick: () => {
-          if (settled) return;
-          settled = true;
-          clearInterval(intervalId);
-          stopTickLoop();
-          a.onClick();
-        },
-      }));
-
-      showModal({
-        title: `${CHARACTERS[holderId].name} is holding the Jester Ball`,
-        body,
-        actions: wrappedActions,
-      });
-
-      startTickLoop();
-      const intervalId = setInterval(() => {
-        remaining -= 1;
-        const el = document.getElementById('jesterball-timer-count');
-        if (el) el.textContent = String(remaining);
-        if (remaining <= 0) {
-          settled = true;
-          clearInterval(intervalId);
-          stopTickLoop();
-          document.querySelector('.modal-overlay')?.remove();
-          // Call the RAW (unwrapped) action directly - the wrapped versions
-          // guard on `settled`, which is already true by this point and
-          // would otherwise silently swallow this auto-pick.
-          const choice = rawActions[Math.floor(Math.random() * rawActions.length)];
-          choice.onClick();
-        }
-      }, 1000);
-    }, 0);
+  // Is targetId a valid place to drop the ball for the given holder? Boingo
+  // (the original thrower) is always valid (Return); anyone else is valid
+  // only if the one-time Pass hasn't been used yet.
+  function isValidBallDropTarget(holderId, targetId) {
+    const t = game.characters[targetId];
+    if (!t || t.isKO || t.id === holderId) return false;
+    if (t.id === game.jesterBall.thrownByCharacterId) return true; // Return
+    return game.jesterBall.canPass; // Pass
   }
 
-  function finishJesterBall(choice, targetId) {
+  function handleBallDrop(holderId, targetId) {
+    if (!game.jesterBall || game.jesterBall.holderCharacterId !== holderId) return;
+    if (!isValidBallDropTarget(holderId, targetId)) return;
+    clearBallTimer();
+    ballTapArmed = false;
+    pushUndoSnapshot();
+    const choice = targetId === game.jesterBall.thrownByCharacterId ? 'return_' : 'pass';
+    finishJesterBall(choice, targetId);
+  }
+
+  // skipRender: when the explosion is immediately followed by the holder's
+  // chosen normal action (same click), that action's own render() is what
+  // actually gets painted - an intermediate render() here would consume
+  // and clear the one-shot smoke/shake flags before they're ever shown,
+  // since the next render() resets them again before reading them.
+  function explodeBallAsTake(holderId, { skipRender = false } = {}) {
+    if (!game.jesterBall || game.jesterBall.holderCharacterId !== holderId) return;
+    clearBallTimer();
+    ballTapArmed = false;
+    pushUndoSnapshot();
+    finishJesterBall('take', undefined, { skipRender });
+  }
+
+  function finishJesterBall(choice, targetId, { skipRender = false } = {}) {
     const holderId = game.jesterBall.holderCharacterId;
+    const thrownByCharacterId = game.jesterBall.thrownByCharacterId;
     const logBefore = game.log.length;
     const ballResult = resolveJesterBall(game, holderId, choice, targetId);
     markHitFromResult(ballResult);
-    jesterBallPromptShownFor = null;
     if (choice === 'pass') playSound('kick');
     else if (choice === 'take') {
       const rebirthEntry = game.log.slice(logBefore).find((e) => e.type === 'rebirth');
@@ -706,17 +722,26 @@ export function renderDashboard(container, game, { onRestart }) {
         reviveCharacterIds.add(rebirthEntry.targetCharacterId);
       } else {
         playSound('smash'); // the ball explodes on the holder
+        smokeCharacterIds.add(holderId);
+        shakeCharacterIds.add(holderId);
         const holder = game.characters[holderId];
         if (holder?.isKO && game.phase !== 'game-over') setTimeout(() => playKO(), 200);
       }
     }
-    else playSound('magic');
+    else {
+      playSound('magic');
+      // Return to Boingo heals him +4 - same golden self-buff glow used for
+      // Divine Restore/Glory Smash.
+      if (thrownByCharacterId && !game.characters[thrownByCharacterId].isKO) {
+        divineLightCharacterIds.add(thrownByCharacterId);
+      }
+    }
     // Return/Pass consume the holder's turn action. Take does NOT - the
     // holder still gets their normal action afterward this same turn.
     if (choice !== 'take') {
       markCharacterActed(game, holderId);
     }
-    render();
+    if (!skipRender) render();
   }
 
   render();

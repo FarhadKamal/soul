@@ -1,6 +1,11 @@
 import { CHARACTERS } from '../data/characters.js';
 
-export function renderCharacterCard(character, { isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked, isDivineLight, isRevived, isShaking, isClawed, isDodging, ownerName, ownerColorClass }) {
+export function renderCharacterCard(character, {
+  isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
+  isDivineLight, isRevived, isShaking, isClawed, isDodging, isSmoking, isHoldingBall,
+  isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
+  ownerName, ownerColorClass,
+}) {
   const def = CHARACTERS[character.id];
   const card = document.createElement('div');
   card.className = 'char-card';
@@ -20,6 +25,21 @@ export function renderCharacterCard(character, { isActing, isTargetable, onTarge
     card.onclick = () => onTargetClick(character.id);
   }
 
+  if (isBallDropTarget) {
+    // Always wired so a real mouse drag-and-drop works immediately -
+    // dragging is inherently deliberate, no extra gate needed.
+    card.classList.add('ball-drop-target');
+    card.ondragover = (e) => e.preventDefault();
+    card.ondrop = (e) => { e.preventDefault(); onBallDrop(character.id); };
+    if (isBallClickTarget) {
+      // Only wired once the holder has tapped the ball icon first (touch
+      // fallback for drag) - prevents an unrelated/accidental card tap
+      // from silently resolving the ball.
+      card.classList.add('ball-click-armed');
+      card.onclick = () => onBallDrop(character.id);
+    }
+  }
+
   if (isRevealedMarked && !character.isKO) {
     const markIcon = document.createElement('div');
     markIcon.className = 'mark-reveal-icon';
@@ -33,6 +53,33 @@ export function renderCharacterCard(character, { isActing, isTargetable, onTarge
     claw.className = 'claw-scratch';
     claw.innerHTML = '<span></span><span></span><span></span>';
     card.appendChild(claw);
+  }
+
+  if (isSmoking && !character.isKO) {
+    const smoke = document.createElement('div');
+    smoke.className = 'smoke-burst';
+    smoke.innerHTML = '<span></span><span></span><span></span><span></span>';
+    card.appendChild(smoke);
+  }
+
+  if (isHoldingBall && !character.isKO) {
+    const ball = document.createElement('div');
+    ball.className = 'jesterball-holding-icon';
+    ball.textContent = '💣';
+    if (onBallIconTap) {
+      // This card belongs to the current holder on their own turn - the
+      // ball is grabbable: drag it (mouse) or tap it then tap a target
+      // (touch), instead of it just sitting there as a passive icon.
+      ball.classList.add('grabbable');
+      if (isBallArmed) ball.classList.add('armed');
+      ball.title = 'Drag onto Boingo (Return) or another player (Pass)';
+      ball.draggable = true;
+      ball.ondragstart = (e) => { e.stopPropagation(); onBallIconDragStart(); };
+      ball.onclick = (e) => { e.stopPropagation(); onBallIconTap(); };
+    } else {
+      ball.title = 'Holding the Jester Ball';
+    }
+    card.appendChild(ball);
   }
 
   if (ownerName) {
@@ -150,4 +197,10 @@ export function frozenCharacterId(game) {
 export function revealedMarkedCharacterIds(game) {
   const akyros = Object.values(game.characters).find((c) => c.id === 'akyros');
   return akyros ? akyros.special.revealedMarks : new Set();
+}
+
+// Who's currently holding the Jester Ball - persists on their card until
+// they resolve it (Return/Pass/Take), unlike the one-shot burst effects.
+export function jesterBallHolderCharacterId(game) {
+  return game.jesterBall ? game.jesterBall.holderCharacterId : null;
 }
