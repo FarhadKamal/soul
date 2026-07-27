@@ -60,6 +60,9 @@ export function executeAction(game, characterId, actionId, targetId, extra) {
   const actionDef = mod.actions[actionId];
   const log = [];
   const result = actionDef.execute(character, targetId, game, log, extra);
+  // Athena's curse-mirror log entry is deferred until here so it lands
+  // AFTER the triggering attack's own log entry, not before it.
+  if (result?.mirrorLogEntry) log.push(result.mirrorLogEntry);
   applyEndOfActionChecks(game);
   game.log.push(...log, { type: 'end-action', round: game.round, characterId, actionId, targetId });
   return result;

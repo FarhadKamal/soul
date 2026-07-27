@@ -81,6 +81,10 @@ export function applyDamage(game, log, {
   }
 
   // Athena curse mirror: triggered by damage actually landing on Athena.
+  // The mirror log entry is deferred (returned on the result, not pushed to
+  // `log` here) and pushed by executeAction() after the triggering ability's
+  // own log entries - otherwise it lands in the log BEFORE the attack line
+  // that caused it, since applyDamage() runs before the caller's own push.
   if (target.id === 'athena' && !isMirror && result.amountDealt > 0) {
     const cursedId = target.special.curseTargetCharacterId;
     if (cursedId && game.characters[cursedId] && !game.characters[cursedId].isKO) {
@@ -92,12 +96,12 @@ export function applyDamage(game, log, {
         ignoresUntargetable: true,
         isMirror: true,
       });
-      log.push({
+      result.mirrorLogEntry = {
         type: 'curse-mirror',
         fromCharacterId: 'athena',
         toCharacterId: cursedId,
         amount: result.amountDealt,
-      });
+      };
     }
   }
 
