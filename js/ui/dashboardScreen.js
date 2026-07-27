@@ -32,8 +32,11 @@ export function renderDashboard(container, game, { onRestart }) {
   // Chronox Cyclone Punch on heads) - same consume-once-per-render pattern.
   let shakeCharacterIds = new Set();
   // Character ids to show a one-time claw-scratch slash on (Akyros's
-  // Shadow Execution) - same consume-once-per-render pattern.
+  // Shadow Execution, Blade's Blood Hunt) - same consume-once-per-render
+  // pattern. clawCounts maps characterId -> number of slashes to draw
+  // (Blood Hunt scales this with streakCount; Shadow Execution is fixed).
   let clawCharacterIds = new Set();
+  let clawCounts = new Map();
   // Character ids to show a one-time dodge-lean skew on (Akyros's Dodge) -
   // same consume-once-per-render pattern.
   let dodgeCharacterIds = new Set();
@@ -206,6 +209,7 @@ export function renderDashboard(container, game, { onRestart }) {
     reviveCharacterIds = new Set(); // consumed for this render only
     shakeCharacterIds = new Set(); // consumed for this render only
     clawCharacterIds = new Set(); // consumed for this render only
+    clawCounts = new Map(); // consumed for this render only
     dodgeCharacterIds = new Set(); // consumed for this render only
     smokeCharacterIds = new Set(); // consumed for this render only
     wrap.appendChild(renderActionPanel(activeCharId));
@@ -378,6 +382,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isRevived: reviveCharacterIds.has(character.id),
           isShaking: shakeCharacterIds.has(character.id),
           isClawed: clawCharacterIds.has(character.id),
+          clawCount: clawCounts.get(character.id),
           isDodging: dodgeCharacterIds.has(character.id),
           isSmoking: smokeCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
@@ -624,6 +629,13 @@ export function renderDashboard(container, game, { onRestart }) {
     if (actionId === 'shadowExecution' && targetId && !result?.dodged && result?.amountDealt > 0) {
       shakeCharacterIds.add(targetId);
       clawCharacterIds.add(targetId);
+      clawCounts.set(targetId, 3);
+    }
+    if (actionId === 'bloodHunt' && targetId && !result?.dodged && result?.amountDealt > 0) {
+      const streak = game.characters[characterId]?.special?.streakCount || 1;
+      if (streak >= 3) shakeCharacterIds.add(targetId);
+      clawCharacterIds.add(targetId);
+      clawCounts.set(targetId, streak);
     }
     playPostActionSounds(actionId, targetId, logBefore);
     finishAction(characterId);

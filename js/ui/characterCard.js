@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, isDodging, isSmoking, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -51,7 +51,12 @@ export function renderCharacterCard(character, {
   if (isClawed && !character.isKO) {
     const claw = document.createElement('div');
     claw.className = 'claw-scratch';
-    claw.innerHTML = '<span></span><span></span><span></span>';
+    // More claws for higher-streak Blood Hunt hits (or Shadow Execution,
+    // which always passes 3) - capped so it stays readable at high streaks.
+    const count = Math.max(1, Math.min(clawCount || 3, 6));
+    claw.innerHTML = Array.from({ length: count }, (_, i) =>
+      `<span style="left:${(100 / (count + 1)) * (i + 1)}%; animation-delay:${i * 0.08}s"></span>`
+    ).join('');
     card.appendChild(claw);
   }
 

@@ -352,9 +352,7 @@
   opacity: 0;
   animation: claw-slash 0.6s ease-out forwards;
 }
-.claw-scratch span:nth-child(1) { left: 28%; transform: rotate(18deg) scaleY(0); animation-delay: 0s; }
-.claw-scratch span:nth-child(2) { left: 48%; transform: rotate(18deg) scaleY(0); animation-delay: 0.08s; }
-.claw-scratch span:nth-child(3) { left: 68%; transform: rotate(18deg) scaleY(0); animation-delay: 0.16s; }
+.claw-scratch span { transform: rotate(18deg) scaleY(0); }
 @keyframes claw-slash {
   0% { opacity: 0; transform: rotate(18deg) scaleY(0); }
   25% { opacity: 1; transform: rotate(18deg) scaleY(1); }
