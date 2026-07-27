@@ -3,6 +3,10 @@ import { flipCoin } from '../engine/random.js';
 
 function maybeRollEclipseContinuation(character, log) {
   if (!character.untargetable) return;
+  character.special.eclipseAttacksSinceCast += 1;
+  // First attack after casting Lunar Eclipse is guaranteed to keep her
+  // untargetable - no coin flip until the 2nd attack onward.
+  if (character.special.eclipseAttacksSinceCast <= 1) return;
   const flip = flipCoin();
   if (flip === 'heads') {
     log.push({ type: 'eclipse-continue', characterId: character.id, flip });
@@ -62,6 +66,7 @@ export const actions = {
       character.usedSpecial = true;
       character.untargetable = true;
       character.special.hasActedOnce = true;
+      character.special.eclipseAttacksSinceCast = 0;
       log.push({ type: 'special', characterId: character.id, actionId: 'lunarEclipse' });
       return {};
     },

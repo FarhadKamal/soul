@@ -11,7 +11,7 @@ function baseSpecialFor(id) {
     case 'akyros':
       return { marks: new Set(), revealedMarks: new Set(), dodgedAttackerIds: new Set() };
     case 'velorya':
-      return { lastTargetId: null, hasActedOnce: false };
+      return { lastTargetId: null, hasActedOnce: false, eclipseAttacksSinceCast: 0 };
     case 'boingo':
       return {};
     case 'blade':

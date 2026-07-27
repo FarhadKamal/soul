@@ -294,7 +294,7 @@
   position: absolute;
   top: 8px;
   left: 10px;
-  font-size: 20px;
+  font-size: 56px;
   filter: drop-shadow(0 0 6px rgba(255, 100, 30, 0.9));
   animation: ball-wobble 1.2s ease-in-out infinite;
   pointer-events: none;
@@ -303,7 +303,7 @@
 .jesterball-holding-icon.grabbable {
   pointer-events: auto;
   cursor: grab;
-  font-size: 24px;
+  font-size: 64px;
   animation: ball-wobble 1.2s ease-in-out infinite, ball-invite 1.6s ease-in-out infinite;
 }
 .jesterball-holding-icon.grabbable:active {
