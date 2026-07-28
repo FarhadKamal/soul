@@ -1,11 +1,11 @@
 import { applyDamage } from '../engine/damagePipeline.js';
 
-// Lunar Eclipse: flat 2-attack duration, no coin flip. Untargetable covers
-// her next 2 attacks after casting, then ends automatically.
+// Lunar Eclipse: flat 3-attack duration, no coin flip. Untargetable covers
+// her next 3 attacks after casting, then ends automatically.
 function maybeEndEclipse(character, log) {
   if (!character.untargetable) return;
   character.special.eclipseAttacksSinceCast += 1;
-  if (character.special.eclipseAttacksSinceCast < 2) return;
+  if (character.special.eclipseAttacksSinceCast < 3) return;
   character.untargetable = false;
   log.push({ type: 'eclipse-end', characterId: character.id });
 }
