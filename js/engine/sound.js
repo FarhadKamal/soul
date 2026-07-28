@@ -18,25 +18,38 @@ function get(name) {
 // Background music: a single independent looping track, entirely separate
 // from the busyCount/tick machinery above - it just keeps playing quietly
 // under every sound effect for the whole match, never paused/resumed by them.
+// Only one music track (menu or battle) plays at a time.
 let musicAudio = null;
+let musicTrack = null; // 'menu' | 'battle' | null
 
-export function startBattleMusic() {
-  if (musicAudio) return; // already playing
+function startMusic(track, file, volume) {
+  if (musicTrack === track) return; // already playing this track
+  if (musicAudio) musicAudio.pause();
   try {
-    const node = new Audio('assets/sounds/mixkit-epical-drums-04-679.mp3');
+    const node = new Audio(`assets/sounds/${file}`);
     node.loop = true;
-    node.volume = 0.25;
+    node.volume = volume;
     node.play().catch(() => {});
     musicAudio = node;
+    musicTrack = track;
   } catch {
     // ignore
   }
+}
+
+export function startMenuMusic() {
+  startMusic('menu', 'bgm-menu.mp3', 0.3);
+}
+
+export function startBattleMusic() {
+  startMusic('battle', 'bgm-battle.mp3', 0.25);
 }
 
 export function stopBattleMusic() {
   if (musicAudio) {
     musicAudio.pause();
     musicAudio = null;
+    musicTrack = null;
   }
 }
 
