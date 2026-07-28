@@ -9,7 +9,7 @@ import { renderLogPanel } from './logPanel.js';
 import { showModal } from './modal.js';
 import { renderRulesModal } from './rulesScreen.js';
 import { rollChaosGamble } from '../engine/random.js';
-import { playActionSound, playUiClick, playKO, playVictory, playCoin, playSound, startTickLoop, stopTickLoop, stopBattleMusic } from '../engine/sound.js';
+import { playActionSound, playUiClick, playKO, playVictory, playCoin, playSound, startTickLoop, stopTickLoop, startMenuMusic } from '../engine/sound.js';
 
 const COIN_FLIP_ACTIONS = new Set(['cyclonePunch']);
 const CHAOS_GAMBLE_ACTIONS = new Set(['chaosGamble']);
@@ -175,8 +175,8 @@ export function renderDashboard(container, game, { onRestart }) {
       clearTurnTimer();
       if (!victorySoundPlayed) {
         victorySoundPlayed = true;
-        stopBattleMusic();
         if (game.winnerPlayerId) playVictory();
+        startMenuMusic();
       }
       container.appendChild(renderGameOver());
       return;
