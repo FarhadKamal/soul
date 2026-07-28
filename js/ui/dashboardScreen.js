@@ -52,14 +52,12 @@ export function renderDashboard(container, game, { onRestart }) {
     }
     if (result.mirrorResult) markHitFromResult(result.mirrorResult);
   }
-  // actionTimer: { characterId, intervalId, remaining } - only runs while the
-  // active character is choosing their main action (not during target
-  // selection, coin flips, RPS, or the Jester Ball modal).
-  let actionTimer = null;
-  // targetTimer: same shape as actionTimer, but covers the "choose a target"
-  // step once an action has been armed - prevents a player from stalling
-  // indefinitely by picking an action and then never picking a target.
-  let targetTimer = null;
+  // turnTimer: { characterId, intervalId, remaining } - a single 20s budget
+  // for the WHOLE turn (choosing an action, choosing a target, cancelling
+  // and repicking any number of times). Started once when the character's
+  // turn begins and never reset by arming/cancelling - only cleared when
+  // the turn actually resolves (or expires and auto-picks for them).
+  let turnTimer = null;
   // ballTimer: covers the window where the holder can drag/tap the Jester
   // Ball to Return/Pass it, before it auto-explodes (Take) on timeout.
   let ballTimer = null;
@@ -68,18 +66,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // Native mouse drag-and-drop works regardless of this flag.
   let ballTapArmed = false;
 
-  function clearActionTimer() {
-    if (actionTimer) {
-      clearInterval(actionTimer.intervalId);
-      actionTimer = null;
-      stopTickLoop();
-    }
-  }
-
-  function clearTargetTimer() {
-    if (targetTimer) {
-      clearInterval(targetTimer.intervalId);
-      targetTimer = null;
+  function clearTurnTimer() {
+    if (turnTimer) {
+      clearInterval(turnTimer.intervalId);
+      turnTimer = null;
       stopTickLoop();
     }
   }
@@ -107,51 +97,44 @@ export function renderDashboard(container, game, { onRestart }) {
     }, 1000);
   }
 
-  function startTargetTimer() {
-    clearTargetTimer();
+  // Starts the single per-turn countdown if one isn't already running for
+  // this character - arming an action, cancelling, or repicking never
+  // restarts it, so a player can never stretch a turn past 20s total.
+  function startTurnTimer(characterId) {
+    if (turnTimer && turnTimer.characterId === characterId) return;
+    clearTurnTimer();
     startTickLoop();
-    const armedAtStart = armedAction;
-    targetTimer = { remaining: ACTION_TIMER_SECONDS, intervalId: null };
-    targetTimer.intervalId = setInterval(() => {
-      targetTimer.remaining -= 1;
-      const el = document.getElementById('target-timer-count');
-      if (el) el.textContent = String(targetTimer.remaining);
-      if (targetTimer.remaining <= 0) {
-        clearTargetTimer();
-        autoPickRandomTargetFor(armedAtStart);
+    turnTimer = { characterId, remaining: ACTION_TIMER_SECONDS, intervalId: null };
+    turnTimer.intervalId = setInterval(() => {
+      turnTimer.remaining -= 1;
+      const actionEl = document.getElementById('action-timer-count');
+      if (actionEl) actionEl.textContent = String(turnTimer.remaining);
+      const targetEl = document.getElementById('target-timer-count');
+      if (targetEl) targetEl.textContent = String(turnTimer.remaining);
+      if (turnTimer.remaining <= 0) {
+        clearTurnTimer();
+        const armedAtExpiry = armedAction;
+        armedAction = null;
+        if (armedAtExpiry) {
+          autoPickRandomTargetFor(armedAtExpiry);
+        } else {
+          autoPickRandomMove(characterId);
+        }
       }
     }, 1000);
   }
 
   function autoPickRandomTargetFor(action) {
-    if (!action || armedAction !== action) return; // stale timer, already resolved/cancelled
     const validTargets = Object.keys(game.characters).filter((tid) => {
       if (action.targetFilter) return action.targetFilter(tid);
       return isValidTarget(game, action.characterId, action.actionId, tid);
     });
     if (validTargets.length === 0) {
-      armedAction = null;
       render();
       return;
     }
     const targetId = validTargets[Math.floor(Math.random() * validTargets.length)];
-    armedAction = null;
     action.onPicked(targetId);
-  }
-
-  function startActionTimer(characterId) {
-    clearActionTimer();
-    startTickLoop();
-    actionTimer = { characterId, remaining: ACTION_TIMER_SECONDS, intervalId: null };
-    actionTimer.intervalId = setInterval(() => {
-      actionTimer.remaining -= 1;
-      const el = document.getElementById('action-timer-count');
-      if (el) el.textContent = String(actionTimer.remaining);
-      if (actionTimer.remaining <= 0) {
-        clearActionTimer();
-        autoPickRandomMove(characterId);
-      }
-    }, 1000);
   }
 
   function autoPickRandomMove(characterId) {
@@ -189,8 +172,7 @@ export function renderDashboard(container, game, { onRestart }) {
     container.innerHTML = '';
 
     if (game.phase === 'game-over') {
-      clearActionTimer();
-      clearTargetTimer();
+      clearTurnTimer();
       if (!victorySoundPlayed) {
         victorySoundPlayed = true;
         stopBattleMusic();
@@ -317,8 +299,7 @@ export function renderDashboard(container, game, { onRestart }) {
     undoBtn.onclick = () => {
       if (!undoSnapshot) return;
       playUiClick();
-      clearActionTimer();
-      clearTargetTimer();
+      clearTurnTimer();
       Object.assign(game, undoSnapshot);
       undoSnapshot = null;
       armedAction = null;
@@ -337,7 +318,7 @@ export function renderDashboard(container, game, { onRestart }) {
         body: 'This will discard the current match and return to character setup.',
         actions: [
           { label: 'Cancel' },
-          { label: 'Restart', primary: true, onClick: () => { clearActionTimer(); clearTargetTimer(); onRestart(); } },
+          { label: 'Restart', primary: true, onClick: () => { clearTurnTimer(); onRestart(); } },
         ],
       });
     };
@@ -421,8 +402,7 @@ export function renderDashboard(container, game, { onRestart }) {
     panel.className = 'action-panel';
 
     if (!activeCharId) {
-      clearActionTimer();
-      clearTargetTimer();
+      clearTurnTimer();
       panel.innerHTML = '<h3>All characters have acted. Ending turn...</h3>';
       setTimeout(() => {
         endTurn(game);
@@ -439,7 +419,7 @@ export function renderDashboard(container, game, { onRestart }) {
     panel.appendChild(h3);
 
     if (armedAction) {
-      clearActionTimer();
+      startTurnTimer(activeCharId);
       const hint = document.createElement('div');
       hint.className = 'targeting-hint';
       hint.textContent = `Choose a target for ${armedAction.label}...`;
@@ -447,14 +427,17 @@ export function renderDashboard(container, game, { onRestart }) {
 
       const timerEl = document.createElement('div');
       timerEl.className = 'action-timer';
-      timerEl.innerHTML = `Auto-target in <span id="target-timer-count">${targetTimer ? targetTimer.remaining : ACTION_TIMER_SECONDS}</span>s`;
+      timerEl.innerHTML = `Auto-target in <span id="target-timer-count">${turnTimer ? turnTimer.remaining : ACTION_TIMER_SECONDS}</span>s`;
       panel.appendChild(timerEl);
 
       const cancelBtn = document.createElement('button');
       cancelBtn.className = 'btn btn-small';
       cancelBtn.style.marginTop = '8px';
       cancelBtn.textContent = 'Cancel';
-      cancelBtn.onclick = () => { clearTargetTimer(); armedAction = null; render(); };
+      cancelBtn.onclick = () => {
+        armedAction = null;
+        render();
+      };
       panel.appendChild(cancelBtn);
       return panel;
     }
@@ -463,7 +446,7 @@ export function renderDashboard(container, game, { onRestart }) {
       && !hasCharacterActedThisTurn(game, activeCharId);
 
     if (isBallHolderPrompt) {
-      clearActionTimer();
+      clearTurnTimer();
       if (!ballTimer || ballTimer.holderId !== activeCharId) {
         startBallTimer(activeCharId);
       }
@@ -478,12 +461,10 @@ export function renderDashboard(container, game, { onRestart }) {
       panel.appendChild(timerEl);
     } else {
       clearBallTimer();
-      if (!actionTimer || actionTimer.characterId !== activeCharId) {
-        startActionTimer(activeCharId);
-      }
+      startTurnTimer(activeCharId);
       const timerEl = document.createElement('div');
       timerEl.className = 'action-timer';
-      timerEl.innerHTML = `Auto-move in <span id="action-timer-count">${actionTimer ? actionTimer.remaining : ACTION_TIMER_SECONDS}</span>s`;
+      timerEl.innerHTML = `Auto-move in <span id="action-timer-count">${turnTimer ? turnTimer.remaining : ACTION_TIMER_SECONDS}</span>s`;
       panel.appendChild(timerEl);
     }
 
@@ -496,7 +477,6 @@ export function renderDashboard(container, game, { onRestart }) {
       btn.className = 'btn';
       btn.textContent = action.label;
       btn.onclick = () => {
-        clearActionTimer();
         playUiClick();
         if (isBallHolderPrompt) explodeBallAsTake(activeCharId, { skipRender: true });
         onActionChosen(activeCharId, action);
@@ -522,7 +502,6 @@ export function renderDashboard(container, game, { onRestart }) {
 
   function armAction(characterId, actionId, label, onPicked, targetFilter) {
     armedAction = { characterId, actionId, label, onPicked, targetFilter };
-    startTargetTimer();
     render();
   }
 
@@ -666,7 +645,7 @@ export function renderDashboard(container, game, { onRestart }) {
 
   function handleTargetPicked(targetId) {
     if (!armedAction || !isLegalTarget(targetId)) return;
-    clearTargetTimer();
+    clearTurnTimer();
     const { onPicked } = armedAction;
     armedAction = null;
     onPicked(targetId);
