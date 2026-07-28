@@ -78,6 +78,17 @@ export function applyDamage(game, log, {
       target.special.marks.clear();
       target.special.revealedMarks.clear();
     }
+    // Chronox's Time Freeze ends immediately if he's KO'd - no one left to
+    // keep re-applying the skip each round, so the frozen target is freed
+    // rather than being stuck frozen with no way for it to ever lift.
+    if (target.id === 'chronox' && target.special.freezeActive) {
+      const frozenId = target.special.freezeTargetId;
+      const frozen = game.characters[frozenId];
+      if (frozen) frozen.skipNextTurn = false;
+      target.special.freezeActive = false;
+      target.special.freezeTargetId = null;
+      log.push({ type: 'freeze-end', targetCharacterId: frozenId });
+    }
   }
 
   // Athena curse mirror: triggered by damage actually landing on Athena.
