@@ -4,9 +4,13 @@ SOUL CLASH — FULL RULES REPORT
 GAME OVERVIEW
 -------------
 - Single PC, pass-and-play. The PC screen is a shared "game progress dashboard"
-  showing state (hearts, shields, marks visible where applicable, charges, etc).
-- A human moderator runs the dashboard and privately handles any hidden
-  information (e.g. Akyros's Hidden Mark) and randomizers (coin flips, RPS).
+  showing state (hearts, shields, marks/curses visible where applicable,
+  charges, streaks, etc).
+- All randomness (coin flips, Chaos Gamble's roll) is resolved instantly by
+  the app itself — no moderator input or physical dice/RPS needed for any of
+  it. The one exception is Akyros's Hidden Mark: since the dashboard is a
+  single shared screen, the player tells a human moderator privately which
+  enemy to mark, and the dashboard never displays it until it's revealed.
 
 MODES
 -----
@@ -15,7 +19,7 @@ MODES
 
 TURN STRUCTURE
 ---------------
-- A "round" = one player's full turn, taken in seat order
+- A "round" = every player has taken one full turn, in seat order
   (P1 -> P2 [-> P3 -> P4]).
 - On their turn, a player acts with ALL of their non-KO'd characters. For each
   character, the player freely chooses which available action to use (normal
@@ -23,7 +27,12 @@ TURN STRUCTURE
   below).
 - Targeting is always fully manual: the active player chooses any enemy
   character for each ability use, unless a card's own rules restrict this
-  (e.g. Blade's streak tracking, Akyros's marks, Athena's curse target).
+  (e.g. Blade's streak tracking, Akyros's marks, Athena's curse target,
+  Velorya's untargetable status while Lunar Eclipse is active).
+- If a character has no usable action available (e.g. every enemy is KO'd or
+  untargetable), their turn is automatically skipped.
+- Each player has 20 seconds to choose their action/target before it is
+  auto-picked for them, to keep the match moving.
 
 LIFE / SHIELD SYSTEM
 ---------------------
@@ -31,7 +40,7 @@ LIFE / SHIELD SYSTEM
   hearts. 0 hearts = KO'd.
 - Shields absorb incoming damage before hearts are touched, but shield
   behavior differs per character (see individual sections below) — some are
-  permanent stacking pools, others decay after 1 round.
+  permanent resetting pools, others decay after 1 round.
 - A KO'd character is removed from play. A player is only eliminated once ALL
   of their characters are KO'd. Last player standing wins the match.
 - Exception: Blade's Rebirth special (see below) can bring him back once.
@@ -54,19 +63,18 @@ Chrono Guard (passive, always on)
 
 Cyclone Punch (normal action, every turn, any target)
 - Flip a coin: Heads -> target loses 2 hearts. Tails -> target loses 1 heart.
-  (Damage applies after shield absorption as normal.)
+  (Damage applies after shield absorption as normal.) The coin flip
+  resolves instantly and silently — only the damage dealt shows the result.
 
 Time Freeze (special, 1x per match, targets one enemy)
-- Initial use: the target skips their very next turn. No coin flip needed
-  for this first skip.
-- From Chronox's NEXT turn onward, EVERY subsequent turn of his triggers an
-  automatic bonus coin flip — regardless of who he actually attacks that
-  turn with Cyclone Punch (he is free to attack anyone, not just the frozen
-  target):
-    Heads -> freeze continues, frozen target skips their next turn again.
-    Tails -> freeze ends permanently.
+- Flat 2-round duration, no coin flip or randomness at all.
+- Initial use: the target skips their very next turn (round 1 of 2).
+- On Chronox's next turn, the freeze automatically extends for exactly 1
+  more round (round 2 of 2), then ends automatically — no flip needed.
 - Only the frozen character skips their own turn — not their whole player's
   turn (relevant when a player controls 2 characters).
+- If Chronox is KO'd while a freeze is still active, it ends immediately —
+  the frozen target is freed right away instead of staying stuck frozen.
 
 
 ===========================================================
@@ -89,7 +97,7 @@ Titan Smash (normal, follow-up, any target)
 Glory Smash (special, 1x per match, follow-up, any target)
 - Deals -2 hearts to the target, plus Tharox gains +2 hearts (self-heal) and
   +2 shield for 1 round only (decays after, even if untouched — unlike
-  Chronox's permanent stacking shield).
+  Chronox's permanent resetting shield).
 - Only usable while holding a charge. Consumes the current charge AND
   grants a brand-new Titan Smash charge in its place, allowing a further
   Titan Smash later.
@@ -146,18 +154,23 @@ Soul Swap (special, 1x per match, targets any enemy)
 Hidden Mark (normal action, no damage)
 - Secretly marks a target. Since this is a shared single-dashboard game,
   the player tells the moderator privately which enemy to mark; the
-  dashboard does not reveal it.
-- Multiple enemies can be marked at the same time. Marking a new target does
-  NOT remove existing marks. Marks are PERMANENT — they never expire or
-  auto-clear for the rest of the match.
-- A mark is only revealed to other players once Fatal Slash is used against
-  that marked target.
-- The player may also re-mark an already-marked target. This has no extra
-  mechanical effect — it's a legal "pass"/stalling move used purely for
-  strategy (e.g. baiting opponents, avoiding revealing info yet).
+  dashboard does not reveal it — it stays fully secret until it's later
+  revealed by Fatal Slash or Shadow Execution landing on that target. This
+  secrecy is the core of the ability and is never shown early.
+- Multiple different enemies can be marked over the course of the match.
+  Marking a new target does NOT remove existing marks. Marks are
+  PERMANENT — they never expire or auto-clear for the rest of the match.
+- Each enemy character can only ever be marked ONCE for the whole match —
+  once Hidden Mark has been used on a character, that character can never
+  be marked again, even after the mark is later revealed or "used up" by
+  Fatal Slash/Shadow Execution. Re-marking an already-marked (or
+  already-revealed) target is not a legal move.
+- If Akyros himself is KO'd, all of his marks (hidden and revealed) are
+  cleared — he can no longer act on them.
 
 Fatal Slash (normal action, every turn, any target)
-- Marked target -> -2 hearts (this reveals that the target was marked).
+- Marked target -> -2 hearts (this reveals that the target was marked, with
+  a visible marker icon on their card from then on).
 - Unmarked target -> -1 heart.
 
 Dodge (passive, always on)
@@ -166,13 +179,16 @@ Dodge (passive, always on)
   damage. Once that enemy's first hit has been negated, all of their
   subsequent attacks on Akyros land normally for the rest of the match.
   Each enemy character has their own independently tracked "first hit."
+  (Athena's curse-mirror damage bypasses Dodge entirely — see Athena
+  section.)
 
 Shadow Execution (special, 1x per match)
 - Requires at least one active mark to exist somewhere among the enemies.
   Player chooses any currently marked enemy as the target: -3 hearts,
-  ignoring shields entirely.
+  ignoring shields entirely. This also reveals the mark, same as Fatal
+  Slash.
 - Does NOT consume/remove the mark — it remains on that target afterward
-  (since marks never expire).
+  (since marks never expire), it's simply now publicly revealed.
 
 
 ===========================================================
@@ -195,13 +211,17 @@ Moonstep (normal action, any target, available from her 2nd attack onward)
     Lunar Strike).
 - Ping-ponging between two targets each turn nets -2 hearts every time,
   since the target always differs from the immediately prior one.
+- If Velorya opened the match with Lunar Eclipse instead of Lunar Strike,
+  her first real attack (even if it's Moonstep) does NOT get the -2 "new
+  target" bonus, since there's no genuine prior target yet — it deals -1
+  like a normal first hit. The bonus becomes available from her second
+  real attack onward.
 
 Lunar Eclipse (special, 1x per match, no target/self-buff)
 - Velorya becomes untargetable by enemy attacks. She still takes her normal
   turns (Lunar Strike/Moonstep) while this is active.
-- After each of her attacks during this state, flip a coin:
-    Heads -> untargetable continues.
-    Tails -> untargetable ends permanently (single use, like all specials).
+- Flat 3-attack duration, no coin flip or randomness at all — untargetable
+  covers her next 3 attacks after casting, then ends automatically.
 
 Interaction with Athena: Velorya's untargetable status does NOT block
 Athena's Curse Strike mirrored damage (see Athena section) — because that
@@ -214,25 +234,32 @@ mirror of damage Athena herself takes.
 ===========================================================
 
 Chaos Gamble (normal action, every turn, any target)
-- The moderator resolves a Rock-Paper-Scissors matchup between Boingo and
-  the target off-dashboard (no separate dashboard input needed — moderator
-  just applies the result):
-    Boingo wins -> target -3 hearts (Giant Explosive Punch)
-    Draw -> target -1 heart (Giant Punch)
-    Boingo loses -> 0 hearts, no effect (Miss)
+- The app instantly rolls a probability outcome the moment the action is
+  used — no RPS, no modal, no moderator input needed. The result is only
+  visible via the damage dealt and the action log:
+    33% chance -> target -3 hearts (Giant Explosive Punch / "3-hit win")
+    33% chance -> target -1 heart (Giant Punch / "1-hit draw")
+    34% chance -> 0 hearts, no effect (Miss)
 
 Jester Ball (special, 1x per match, thrown at one target)
 - Does NOT resolve immediately. The ball sits with the current holder until
   THAT PLAYER'S OWN next turn, where handling the ball becomes their action
-  for that turn. The holder must choose one of:
-    Return to Boingo -> Boingo gains +4 hearts (self-heal).
+  for that turn (drag the ball icon onto Boingo to Return, or onto another
+  player to Pass; choosing a normal action instead auto-explodes it as
+  Take). The holder must effectively choose one of:
+    Return to Boingo -> Boingo gains +4 hearts (self-heal). Consumes the
+      holder's turn.
     Pass to a different player -> that player becomes the new holder, same
       deal applies on their own next turn — BUT only one pass total is
-      allowed for the whole Jester Ball sequence.
-    Take it -> holder loses -4 hearts.
+      allowed for the whole Jester Ball sequence. Consumes the holder's
+      turn.
+    Take it -> holder loses -4 hearts. Does NOT consume the holder's turn —
+      they still get their normal action that same turn afterward.
 - Once the ball has been passed once, the second (final) holder no longer
   has the pass option — only Return (Boingo +4 hearts) or Take (-4 hearts to
   self) are available to them.
+- A 20-second safety timer applies once the ball lands on a holder's turn —
+  if they don't act, it auto-resolves as Take.
 
 
 ===========================================================
@@ -251,11 +278,15 @@ Blood Hunt (normal action, every turn, any target)
 - If Blade is frozen/skips a turn (e.g. via Chronox's Time Freeze), the
   streak does NOT reset — it pauses and resumes from where it left off once
   he acts again against the same target.
+- The streak visually shows as a scaling claw-scratch effect on the target's
+  card, matching the current streak count.
 
 Rebirth (special, 1x per match)
 - Automatic (not player-chosen) the instant Blade would be KO'd, if the
   special hasn't been used yet. Revives him with 2 hearts. Does not cost a
   turn/action.
+- Rebirth also clears his frozen status (if any), resets his Blood Hunt
+  streak to 0, and lifts any curse Athena had placed on him.
 - One-time only — if he is KO'd again after Rebirth, he is out of the match
   for good.
 
@@ -275,14 +306,13 @@ Akyros's Hidden Mark)
   any attack (from anyone), the CURSED player also takes that same amount of
   damage as a mirrored copy. Athena still takes her own damage normally too
   — this is not a redirect away from her; both she and the cursed player
-  take the hit.
+  take the hit. The mirror bypasses Akyros's Dodge and Velorya's
+  untargetable status, since it's not a direct targeted attack.
 - The mirrored damage to the cursed player still passes through THEIR OWN
   shield normally (can be reduced/absorbed) — it does NOT ignore shields
   (unlike Akyros's Shadow Execution, which does ignore shields).
-- Confirmed interaction: this mirrored damage is NOT blocked by Velorya's
-  Lunar Eclipse untargetable status, because it isn't a targeted attack
-  selection against the cursed player — it's a side-effect mirror triggered
-  by Athena being hit.
+- If the curse mirror KO's Blade, his Rebirth still triggers normally and
+  also lifts the curse off him.
 
 Divine Restore (special, 1x per match)
 - Athena gains +3 hearts (self-heal) and +2 shield for 1 round only (decays

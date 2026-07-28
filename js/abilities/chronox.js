@@ -6,12 +6,12 @@ export function onTurnStart(character, game, log) {
   character.shield = 1;
   log.push({ type: 'passive', characterId: character.id, text: `${character.id}'s shield resets to 1 (Chrono Guard)` });
 
-  // Time Freeze: flat 3-round duration, no coin flip. Casting already skips
-  // the target's next turn (round 1); this extends it for 2 more rounds,
+  // Time Freeze: flat 2-round duration, no coin flip. Casting already skips
+  // the target's next turn (round 1); this extends it for 1 more round,
   // then ends automatically.
   if (character.special.freezeActive) {
     const frozenId = character.special.freezeTargetId;
-    if (character.special.freezeSkipsApplied < 3) {
+    if (character.special.freezeSkipsApplied < 2) {
       const frozen = game.characters[frozenId];
       if (frozen && !frozen.isKO) frozen.skipNextTurn = true;
       character.special.freezeSkipsApplied += 1;

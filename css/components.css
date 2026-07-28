@@ -99,3 +99,54 @@
   font-size: 40px;
   margin: 16px 0;
 }
+
+.rules-modal {
+  max-width: 720px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+.rules-modal h2 {
+  text-align: center;
+  flex-shrink: 0;
+}
+.rules-body {
+  overflow-y: auto;
+  padding-right: 6px;
+}
+.rules-section {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.rules-section:last-child {
+  border-bottom: none;
+}
+.rules-section h3 {
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.rules-char-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rules-char-portrait {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+.rules-ability {
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+.rules-ability strong {
+  color: var(--text);
+}
+.rules-modal .modal-actions {
+  flex-shrink: 0;
+}

@@ -7,6 +7,7 @@ import {
 import { renderCharacterCard, cursedCharacterId, frozenCharacterId, revealedMarkedCharacterIds, jesterBallHolderCharacterId } from './characterCard.js';
 import { renderLogPanel } from './logPanel.js';
 import { showModal } from './modal.js';
+import { renderRulesModal } from './rulesScreen.js';
 import { rollChaosGamble } from '../engine/random.js';
 import { playActionSound, playUiClick, playKO, playVictory, playCoin, playSound, startTickLoop, stopTickLoop } from '../engine/sound.js';
 
@@ -298,6 +299,15 @@ export function renderDashboard(container, game, { onRestart }) {
 
     const actions = document.createElement('div');
     actions.className = 'top-bar-actions';
+
+    const rulesBtn = document.createElement('button');
+    rulesBtn.className = 'btn btn-small';
+    rulesBtn.textContent = 'How to Play';
+    rulesBtn.onclick = () => {
+      playUiClick();
+      renderRulesModal(document.body);
+    };
+    actions.appendChild(rulesBtn);
 
     const undoBtn = document.createElement('button');
     undoBtn.className = 'btn btn-small';

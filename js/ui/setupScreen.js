@@ -1,5 +1,6 @@
 import { CHARACTERS, CHARACTER_IDS } from '../data/characters.js';
 import { playUiClick } from '../engine/sound.js';
+import { renderRulesModal } from './rulesScreen.js';
 
 export function renderSetupScreen(container, onStart) {
   let mode = null;
@@ -20,6 +21,15 @@ export function renderSetupScreen(container, onStart) {
     subtitle.className = 'subtitle';
     subtitle.textContent = 'Choose your mode and characters';
     wrap.appendChild(subtitle);
+
+    const rulesBtn = document.createElement('button');
+    rulesBtn.className = 'btn how-to-play-btn';
+    rulesBtn.textContent = 'How to Play';
+    rulesBtn.onclick = () => {
+      playUiClick();
+      renderRulesModal(document.body);
+    };
+    wrap.appendChild(rulesBtn);
 
     const modeSelect = document.createElement('div');
     modeSelect.className = 'mode-select';
