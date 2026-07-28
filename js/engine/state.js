@@ -9,7 +9,7 @@ function baseSpecialFor(id) {
     case 'zerathys':
       return { chargeCount: 0 };
     case 'akyros':
-      return { marks: new Set(), revealedMarks: new Set(), dodgedAttackerIds: new Set() };
+      return { marks: new Set(), revealedMarks: new Set(), everMarkedIds: new Set(), dodgedAttackerIds: new Set() };
     case 'velorya':
       return { lastTargetId: null, hasActedOnce: false, eclipseAttacksSinceCast: 0 };
     case 'boingo':

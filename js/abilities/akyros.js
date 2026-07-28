@@ -14,6 +14,10 @@ export const actions = {
     isLegal: () => true,
     execute(character, targetId, game, log) {
       character.special.marks.add(targetId);
+      // Once marked, a target can never be marked again for the rest of the
+      // match - even after the mark is revealed/consumed by Fatal Slash or
+      // Shadow Execution.
+      character.special.everMarkedIds.add(targetId);
       // Deliberately no public log text naming the target; UI shows a
       // generic "Hidden Mark placed" line so other players can't see it.
       log.push({ type: 'hidden-mark', characterId: character.id, targetId, hidden: true });

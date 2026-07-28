@@ -31,6 +31,7 @@ export function isValidTarget(game, characterId, actionId, targetId) {
   if (target.ownerId === character.ownerId) return false;
   if (target.untargetable) return false;
   if (actionId === 'shadowExecution') return character.special.marks.has(targetId);
+  if (actionId === 'hiddenMark') return !character.special.everMarkedIds.has(targetId);
   return true;
 }
 
