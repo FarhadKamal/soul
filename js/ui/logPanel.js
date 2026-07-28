@@ -41,8 +41,11 @@ function formatEntry(entry) {
       return `${nameOf(entry.targetCharacterId)} DODGED the first attack from ${nameOf(entry.attackerId)}!`;
     case 'rebirth':
       return `${nameOf(entry.targetCharacterId)} used REBIRTH — revived with 2 hearts!`;
-    case 'curse-mirror':
-      return `Athena's curse mirrors ${entry.amount} damage to ${nameOf(entry.toCharacterId)}`;
+    case 'curse-mirror': {
+      let text = `Athena's curse mirrors ${entry.amount} damage to ${nameOf(entry.toCharacterId)}`;
+      if (entry.koTriggered) text += ` — ${nameOf(entry.toCharacterId)} KO'd!`;
+      return text;
+    }
     case 'curse':
       return `Athena cast Curse Strike on ${nameOf(entry.targetId)}`;
     case 'hidden-mark':

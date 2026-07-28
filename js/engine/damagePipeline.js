@@ -112,6 +112,8 @@ export function applyDamage(game, log, {
         fromCharacterId: 'athena',
         toCharacterId: cursedId,
         amount: result.amountDealt,
+        koTriggered: result.mirrorResult.koTriggered,
+        revived: result.mirrorResult.revived,
       };
     }
   }
