@@ -3,7 +3,7 @@ const MAX_HEARTS = 7;
 function baseSpecialFor(id) {
   switch (id) {
     case 'chronox':
-      return { freezeActive: false, freezeTargetId: null };
+      return { freezeActive: false, freezeTargetId: null, freezeSkipsApplied: 0 };
     case 'tharox':
       return { hasCharge: false };
     case 'zerathys':

@@ -6,19 +6,20 @@ export function onTurnStart(character, game, log) {
   character.shield = 1;
   log.push({ type: 'passive', characterId: character.id, text: `${character.id}'s shield resets to 1 (Chrono Guard)` });
 
-  // Freeze continuation: from the turn AFTER Time Freeze first lands, every
-  // Chronox turn rolls an automatic bonus flip regardless of who he attacks.
+  // Time Freeze: flat 2-round duration, no coin flip. Casting already skips
+  // the target's next turn (1 round); this extends it for exactly 1 more
+  // round, then ends automatically.
   if (character.special.freezeActive) {
-    const flip = flipCoin();
     const frozenId = character.special.freezeTargetId;
-    if (flip === 'heads') {
+    if (character.special.freezeSkipsApplied < 2) {
       const frozen = game.characters[frozenId];
       if (frozen && !frozen.isKO) frozen.skipNextTurn = true;
-      log.push({ type: 'freeze-continue', targetCharacterId: frozenId, flip });
+      character.special.freezeSkipsApplied += 1;
+      log.push({ type: 'freeze-continue', targetCharacterId: frozenId });
     } else {
       character.special.freezeActive = false;
       character.special.freezeTargetId = null;
-      log.push({ type: 'freeze-end', targetCharacterId: frozenId, flip });
+      log.push({ type: 'freeze-end', targetCharacterId: frozenId });
     }
   }
 }
@@ -48,6 +49,7 @@ export const actions = {
       character.usedSpecial = true;
       character.special.freezeActive = true;
       character.special.freezeTargetId = targetId;
+      character.special.freezeSkipsApplied = 1;
       const target = game.characters[targetId];
       if (target) target.skipNextTurn = true;
       log.push({ type: 'special', characterId: character.id, actionId: 'timeFreeze', targetId });

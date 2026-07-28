@@ -1,19 +1,13 @@
 import { applyDamage } from '../engine/damagePipeline.js';
-import { flipCoin } from '../engine/random.js';
 
-function maybeRollEclipseContinuation(character, log) {
+// Lunar Eclipse: flat 2-attack duration, no coin flip. Untargetable covers
+// her next 2 attacks after casting, then ends automatically.
+function maybeEndEclipse(character, log) {
   if (!character.untargetable) return;
   character.special.eclipseAttacksSinceCast += 1;
-  // First attack after casting Lunar Eclipse is guaranteed to keep her
-  // untargetable - no coin flip until the 2nd attack onward.
-  if (character.special.eclipseAttacksSinceCast <= 1) return;
-  const flip = flipCoin();
-  if (flip === 'heads') {
-    log.push({ type: 'eclipse-continue', characterId: character.id, flip });
-  } else {
-    character.untargetable = false;
-    log.push({ type: 'eclipse-end', characterId: character.id, flip });
-  }
+  if (character.special.eclipseAttacksSinceCast < 2) return;
+  character.untargetable = false;
+  log.push({ type: 'eclipse-end', characterId: character.id });
 }
 
 export const actions = {
@@ -31,7 +25,7 @@ export const actions = {
         ignoresShield: true,
       });
       log.push({ type: 'attack', characterId: character.id, actionId: 'lunarStrike', targetId, ...result });
-      maybeRollEclipseContinuation(character, log);
+      maybeEndEclipse(character, log);
       return result;
     },
   },
@@ -54,7 +48,7 @@ export const actions = {
         ignoresShield: true,
       });
       log.push({ type: 'attack', characterId: character.id, actionId: 'moonstep', targetId, isNewTarget, ...result });
-      maybeRollEclipseContinuation(character, log);
+      maybeEndEclipse(character, log);
       return result;
     },
   },

@@ -32,13 +32,11 @@ function formatEntry(entry) {
     case 'passive':
       return entry.text;
     case 'freeze-continue':
-      return `Time Freeze continues on ${nameOf(entry.targetCharacterId)} (${entry.flip})`;
+      return `Time Freeze continues on ${nameOf(entry.targetCharacterId)}`;
     case 'freeze-end':
-      return `Time Freeze ends on ${nameOf(entry.targetCharacterId)} (${entry.flip})`;
-    case 'eclipse-continue':
-      return `${nameOf(entry.characterId)}'s Lunar Eclipse continues (${entry.flip})`;
+      return `Time Freeze ends on ${nameOf(entry.targetCharacterId)}`;
     case 'eclipse-end':
-      return `${nameOf(entry.characterId)}'s Lunar Eclipse ends (${entry.flip})`;
+      return `${nameOf(entry.characterId)}'s Lunar Eclipse ends`;
     case 'dodge':
       return `${nameOf(entry.targetCharacterId)} DODGED the first attack from ${nameOf(entry.attackerId)}!`;
     case 'rebirth':
