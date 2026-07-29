@@ -13,6 +13,11 @@ function get(name) {
 let musicAudio = null;
 let musicTrack = null; // 'menu' | 'battle' | null
 
+// Battle track pool - one is picked at random each time a new match starts,
+// so back-to-back matches don't always hear the same loop. Drop more mp3
+// files into assets/sounds/ and add their names here to grow the pool.
+const BATTLE_TRACKS = ['bgm-battle.mp3', 'bgm-battle-2.mp3', 'bgm-battle-3.mp3'];
+
 function startMusic(track, file, volume) {
   if (musicTrack === track) return; // already playing this track
   if (musicAudio) musicAudio.pause();
@@ -33,7 +38,13 @@ export function startMenuMusic() {
 }
 
 export function startBattleMusic() {
-  startMusic('battle', 'bgm-battle.mp3', 0.25);
+  // Force a fresh random pick every match start, even if a battle track is
+  // already playing (e.g. New Match without returning to the menu screen
+  // first) - otherwise musicTrack === 'battle' would short-circuit and
+  // silently keep the previous match's track going.
+  musicTrack = null;
+  const file = BATTLE_TRACKS[Math.floor(Math.random() * BATTLE_TRACKS.length)];
+  startMusic('battle', file, 0.25);
 }
 
 export function stopBattleMusic() {
