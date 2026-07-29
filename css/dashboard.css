@@ -8,6 +8,11 @@
   height: 100vh;
   overflow: hidden;
 }
+.dashboard.game-over-screen {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
 
 .top-bar {
   display: flex;

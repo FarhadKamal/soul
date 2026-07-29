@@ -213,7 +213,7 @@ export function renderDashboard(container, game, { onRestart }) {
 
   function renderGameOver() {
     const wrap = document.createElement('div');
-    wrap.className = 'dashboard';
+    wrap.className = 'dashboard game-over-screen';
 
     const winner = game.players.find((p) => p.id === game.winnerPlayerId);
     const isDraw = !winner;
