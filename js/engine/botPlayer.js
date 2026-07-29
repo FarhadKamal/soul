@@ -188,10 +188,18 @@ function chooseAkyrosMove(character, game, usable) {
   const markedTargets = validTargetsFor(game, character, 'shadowExecution');
   // Shadow Execution secures a kill/heavy hit on an already-marked, weak
   // enemy - use it once one is low enough that -3 ignoring shields matters.
+  // Also worth using early against a currently-shielded marked target,
+  // since Fatal Slash's marked bonus gets mostly negated by any shield
+  // while Shadow Execution ignores it entirely - no point chipping away at
+  // a shield with Fatal Slash when the guaranteed-through hit is available.
   if (byId.shadowExecution) {
     const weakest = lowestHeartsTarget(game, markedTargets);
+    const shieldedTarget = markedTargets.find((tid) => game.characters[tid].shield > 0);
     if (weakest && game.characters[weakest].hearts <= 3) {
       return { actionId: 'shadowExecution', targetId: weakest };
+    }
+    if (shieldedTarget) {
+      return { actionId: 'shadowExecution', targetId: shieldedTarget };
     }
   }
   // Prefer Fatal Slash on an already-marked target for the bonus damage.
