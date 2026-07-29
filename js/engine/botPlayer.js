@@ -312,7 +312,10 @@ export function chooseBotJesterBallMove(character, game) {
   // the eventual -4 (or the whole decision) onto whoever's the biggest
   // threat instead of eating it themselves.
   if (jb.canPass) {
-    const candidates = livingEnemies(game, character).filter((c) => c.id !== character.id);
+    // Passing back to Boingo (the original thrower) makes no sense - that's
+    // what Return is for, and it always heals him regardless of who does it.
+    const candidates = livingEnemies(game, character)
+      .filter((c) => c.id !== character.id && c.id !== jb.thrownByCharacterId);
     if (candidates.length > 0) {
       const targetId = biggestThreatTarget(game, character, candidates.map((c) => c.id))
         || lowestHeartsTarget(game, candidates.map((c) => c.id));
