@@ -202,7 +202,7 @@ export function renderDashboard(container, game, { onRestart }) {
     dodgeCharacterIds = new Set(); // consumed for this render only
     smokeCharacterIds = new Set(); // consumed for this render only
     wrap.appendChild(renderActionPanel(activeCharId));
-    const logPanelEl = renderLogPanel(game.log);
+    const logPanelEl = renderLogPanel(game);
     wrap.appendChild(logPanelEl);
     container.appendChild(wrap);
     // Must run after the panel is actually attached to the live document -
@@ -286,7 +286,7 @@ export function renderDashboard(container, game, { onRestart }) {
     };
     logHeadingRow.appendChild(copyLogBtn);
     wrap.appendChild(logHeadingRow);
-    const logPanel = renderLogPanel(game.log);
+    const logPanel = renderLogPanel(game);
     logPanel.style.maxHeight = '400px';
     wrap.appendChild(logPanel);
 
@@ -297,7 +297,7 @@ export function renderDashboard(container, game, { onRestart }) {
   // (e.g. for reporting a suspected bug). Briefly flips the button label to
   // confirm success/failure rather than relying on a separate toast.
   function copyLogToClipboard(btn) {
-    const text = formatLogAsText(game.log);
+    const text = formatLogAsText(game);
     const showResult = (label) => {
       const original = btn.textContent;
       btn.textContent = label;

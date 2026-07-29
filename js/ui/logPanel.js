@@ -74,19 +74,45 @@ function labelFor(actionId) {
   return map[actionId] || actionId;
 }
 
-// Plain-text lines for the full log, in order - shared by the on-screen
-// panel and the "Copy Log" button so both always match exactly.
-export function formatLogAsText(log) {
-  const entries = log.map(formatEntry).filter(Boolean);
-  return entries.length === 0 ? 'Match started.' : entries.join('\n');
+// One line per team listing its characters by name, e.g. "Team 1: Boingo,
+// Tharox vs Team 2: Athena, Velorya" - only meaningful (and only shown)
+// when a player controls more than one character (2v2 mode), since 1v1/4p
+// team membership is already obvious from the board (each player = 1
+// character). Prefixed to both the on-screen log and the copyable text so
+// team composition is never ambiguous when reviewing a match afterward.
+function teamCompositionLine(game) {
+  if (!game.players.some((p) => p.characterIds.length > 1)) return null;
+  const teams = game.players.map((p, i) =>
+    `Team ${i + 1}: ${p.characterIds.map(nameOf).join(', ')}`
+  );
+  return teams.join(' vs ');
 }
 
-export function renderLogPanel(log) {
+// Plain-text lines for the full log, in order - shared by the on-screen
+// panel and the "Copy Log" button so both always match exactly.
+export function formatLogAsText(game) {
+  const entries = game.log.map(formatEntry).filter(Boolean);
+  const lines = entries.length === 0 ? ['Match started.'] : entries;
+  const teamLine = teamCompositionLine(game);
+  return teamLine ? [teamLine, ...lines].join('\n') : lines.join('\n');
+}
+
+export function renderLogPanel(game) {
   const panel = document.createElement('div');
   panel.className = 'log-panel';
-  const entries = log.map(formatEntry).filter(Boolean);
+  const entries = game.log.map(formatEntry).filter(Boolean);
+  const teamLine = teamCompositionLine(game);
+  if (teamLine) {
+    const div = document.createElement('div');
+    div.className = 'log-entry log-team-line';
+    div.textContent = teamLine;
+    panel.appendChild(div);
+  }
   if (entries.length === 0) {
-    panel.innerHTML = '<div class="log-entry">Match started.</div>';
+    const startedDiv = document.createElement('div');
+    startedDiv.className = 'log-entry';
+    startedDiv.textContent = 'Match started.';
+    panel.appendChild(startedDiv);
   } else {
     entries.forEach((text) => {
       const div = document.createElement('div');

@@ -494,6 +494,11 @@
 .log-panel .log-entry:last-child {
   border-bottom: none;
 }
+.log-panel .log-team-line {
+  color: var(--gold);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
 
 .game-over-banner {
   text-align: center;
