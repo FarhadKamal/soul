@@ -8,6 +8,7 @@ import { renderCharacterCard, cursedCharacterId, frozenCharacterId, revealedMark
 import { renderLogPanel } from './logPanel.js';
 import { showModal } from './modal.js';
 import { renderRulesModal } from './rulesScreen.js';
+import { toggleFullscreen } from './fullscreen.js';
 import { rollChaosGamble } from '../engine/random.js';
 import { chooseBotMove, chooseBotJesterBallMove } from '../engine/botPlayer.js';
 import { playActionSound, playUiClick, playKO, playVictory, playCoin, playSound, startTickLoop, stopTickLoop, startMenuMusic } from '../engine/sound.js';
@@ -300,6 +301,15 @@ export function renderDashboard(container, game, { onRestart }) {
       renderRulesModal(document.body);
     };
     actions.appendChild(rulesBtn);
+
+    const fullscreenBtn = document.createElement('button');
+    fullscreenBtn.className = 'btn btn-small';
+    fullscreenBtn.textContent = document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen';
+    fullscreenBtn.onclick = () => {
+      playUiClick();
+      toggleFullscreen();
+    };
+    actions.appendChild(fullscreenBtn);
 
     const undoBtn = document.createElement('button');
     undoBtn.className = 'btn btn-small';
@@ -810,6 +820,8 @@ export function renderDashboard(container, game, { onRestart }) {
     }
     if (!skipRender) render();
   }
+
+  document.addEventListener('fullscreenchange', render);
 
   render();
 }

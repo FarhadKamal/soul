@@ -1,6 +1,7 @@
 import { CHARACTERS, CHARACTER_IDS } from '../data/characters.js';
 import { playUiClick } from '../engine/sound.js';
 import { renderRulesModal } from './rulesScreen.js';
+import { toggleFullscreen } from './fullscreen.js';
 
 export function renderSetupScreen(container, onStart) {
   let mode = null;
@@ -23,6 +24,9 @@ export function renderSetupScreen(container, onStart) {
     subtitle.textContent = 'Choose your mode and characters';
     wrap.appendChild(subtitle);
 
+    const topButtons = document.createElement('div');
+    topButtons.className = 'setup-top-buttons';
+
     const rulesBtn = document.createElement('button');
     rulesBtn.className = 'btn how-to-play-btn';
     rulesBtn.textContent = 'How to Play';
@@ -30,7 +34,18 @@ export function renderSetupScreen(container, onStart) {
       playUiClick();
       renderRulesModal(document.body);
     };
-    wrap.appendChild(rulesBtn);
+    topButtons.appendChild(rulesBtn);
+
+    const fullscreenBtn = document.createElement('button');
+    fullscreenBtn.className = 'btn';
+    fullscreenBtn.textContent = document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen';
+    fullscreenBtn.onclick = () => {
+      playUiClick();
+      toggleFullscreen();
+    };
+    topButtons.appendChild(fullscreenBtn);
+
+    wrap.appendChild(topButtons);
 
     const modeSelect = document.createElement('div');
     modeSelect.className = 'mode-select';
@@ -147,6 +162,8 @@ export function renderSetupScreen(container, onStart) {
 
     container.appendChild(wrap);
   }
+
+  document.addEventListener('fullscreenchange', render);
 
   render();
 }

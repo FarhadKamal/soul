@@ -15,9 +15,11 @@
   color: var(--text-dim);
   margin-bottom: 32px;
 }
-.how-to-play-btn {
-  display: block;
-  margin: 0 auto 32px;
+.setup-top-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 32px;
 }
 
 .mode-select {

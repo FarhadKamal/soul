@@ -33,16 +33,17 @@
 }
 
 .board {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 340px));
+  display: flex;
+  flex-wrap: nowrap;
   justify-content: center;
-  align-content: start;
   gap: 14px;
   margin-bottom: 10px;
   flex-shrink: 0;
 }
-
 .team-group {
+  flex: 1;
+  min-width: 0;
+  max-width: 340px;
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 12px;
