@@ -53,9 +53,10 @@ export const jesterBallResolution = {
     label: 'Pass to another player',
     isLegal: (game) => game.jesterBall.canPass,
     execute(game, log, newHolderCharacterId) {
+      const fromCharacterId = game.jesterBall.holderCharacterId;
       game.jesterBall.holderCharacterId = newHolderCharacterId;
       game.jesterBall.canPass = false;
-      log.push({ type: 'jester-ball-pass', toCharacterId: newHolderCharacterId });
+      log.push({ type: 'jester-ball-pass', fromCharacterId, toCharacterId: newHolderCharacterId });
     },
   },
   take: {

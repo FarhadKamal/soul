@@ -53,7 +53,7 @@ function formatEntry(entry) {
     case 'jester-ball-return':
       return `Jester Ball returned to ${nameOf(entry.boingoId)} — +4 hearts`;
     case 'jester-ball-pass':
-      return `Jester Ball passed to ${nameOf(entry.toCharacterId)}`;
+      return `${nameOf(entry.fromCharacterId)} passed the Jester Ball to ${nameOf(entry.toCharacterId)}`;
     case 'jester-ball-take':
       return `${nameOf(entry.targetCharacterId)} took the Jester Ball — -4 hearts`;
     default:
