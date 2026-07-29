@@ -134,7 +134,6 @@ export function renderCharacterCard(character, {
     if (character.shield > 0) {
       badges.appendChild(makeBadge(`🛡 ${character.shield}`, 'shield'));
     }
-    if (isCursed) badges.appendChild(makeBadge('Cursed by Athena', 'cursed'));
     badges.append(...statusBadges(character));
     card.appendChild(badges);
   }
@@ -151,7 +150,6 @@ function makeBadge(text, cls) {
 
 function statusBadges(character) {
   const badges = [];
-  if (character.skipNextTurn) badges.push(makeBadge('Frozen - skips turn', 'frozen'));
   if (character.untargetable) badges.push(makeBadge('Untargetable', 'frozen'));
   if (character.usedSpecial) badges.push(makeBadge('Special used', 'warn'));
 
@@ -167,19 +165,11 @@ function statusBadges(character) {
         badges.push(makeBadge(`Streak x${character.special.streakCount}`, 'warn'));
       }
       break;
-    case 'velorya':
-      if (character.special.lastTargetId) {
-        const lastName = CHARACTERS[character.special.lastTargetId]?.name || character.special.lastTargetId;
-        badges.push(makeBadge(`Last hit: ${lastName} (hit again = -1, new target = -2)`, 'warn'));
-      } else if (character.special.hasActedOnce) {
-        badges.push(makeBadge('No Moonstep memory yet', 'warn'));
-      }
-      break;
   }
   return badges;
 }
 
-// Renders a "CURSED" badge on whichever character is currently cursed by an Athena in the game.
+// Drives the cursed-mark visual effect on whichever character is currently cursed by an Athena in the game.
 export function cursedCharacterId(game) {
   const athena = Object.values(game.characters).find((c) => c.id === 'athena');
   return athena ? athena.special.curseTargetCharacterId : null;
