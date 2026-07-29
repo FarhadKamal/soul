@@ -201,8 +201,13 @@ export function renderDashboard(container, game, { onRestart }) {
     dodgeCharacterIds = new Set(); // consumed for this render only
     smokeCharacterIds = new Set(); // consumed for this render only
     wrap.appendChild(renderActionPanel(activeCharId));
-    wrap.appendChild(renderLogPanel(game.log));
+    const logPanelEl = renderLogPanel(game.log);
+    wrap.appendChild(logPanelEl);
     container.appendChild(wrap);
+    // Must run after the panel is actually attached to the live document -
+    // scrollHeight is unreliable on a detached element, which is why
+    // auto-scroll wasn't working before.
+    logPanelEl.scrollTop = logPanelEl.scrollHeight;
   }
 
   function renderGameOver() {

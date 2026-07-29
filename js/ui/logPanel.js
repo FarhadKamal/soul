@@ -88,6 +88,5 @@ export function renderLogPanel(log) {
       panel.appendChild(div);
     });
   }
-  panel.scrollTop = panel.scrollHeight;
   return panel;
 }

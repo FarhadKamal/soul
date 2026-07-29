@@ -95,14 +95,27 @@ function chooseTharoxMove(character, game, usable) {
   const byId = Object.fromEntries(usable.map((a) => [a.actionId, a]));
   // Mandatory cash-in already narrows usable to just Titan Smash/Glory
   // Smash while charged - prefer Glory Smash (heal+shield bonus) whenever
-  // it's available, otherwise Titan Smash. Uncharged: Toss to build a
-  // charge unless already at low hearts and an immediate hit is safer.
+  // it's available, otherwise Titan Smash.
   if (byId.glorySmash) {
     return { actionId: 'glorySmash', targetId: pickDefaultTarget(game, character, 'glorySmash') };
   }
   if (byId.titanSmash) {
     return { actionId: 'titanSmash', targetId: pickDefaultTarget(game, character, 'titanSmash') };
   }
+  // Uncharged: Smash (flat -1, no shield ignore) secures an immediate kill
+  // on anyone already at 1 heart with no shield - don't pass that up just
+  // to build a charge for later, since the target won't be around later.
+  if (byId.smash) {
+    const smashTargets = validTargetsFor(game, character, 'smash');
+    const securesKill = smashTargets.find((tid) => {
+      const t = game.characters[tid];
+      return t.hearts <= Math.max(0, 1 - t.shield);
+    });
+    if (securesKill) {
+      return { actionId: 'smash', targetId: securesKill };
+    }
+  }
+  // Otherwise, Toss to build a charge for the much bigger Titan Smash later.
   if (byId.titanToss) {
     return { actionId: 'titanToss', targetId: null };
   }
@@ -112,6 +125,21 @@ function chooseTharoxMove(character, game, usable) {
 function chooseZerathysMove(character, game, usable) {
   const byId = Object.fromEntries(usable.map((a) => [a.actionId, a]));
   const chargeCount = character.special.chargeCount;
+  const wrathDamage = [1, 2, 3][chargeCount];
+  // Thunder Wrath at CURRENT charge secures an immediate kill - don't pass
+  // that up to sit and charge further, since the target won't be around
+  // later. Shield absorbs first, so it must be low enough to still die
+  // after that.
+  if (byId.thunderWrath) {
+    const wrathTargets = validTargetsFor(game, character, 'thunderWrath');
+    const securesKill = wrathTargets.find((tid) => {
+      const t = game.characters[tid];
+      return t.hearts <= Math.max(0, wrathDamage - t.shield);
+    });
+    if (securesKill) {
+      return { actionId: 'thunderWrath', targetId: securesKill };
+    }
+  }
   // Soul Swap is strongest when the target has meaningfully more hearts
   // than Zerathys - stealing their pool and dumping his lower total onto
   // them. Use it opportunistically once available.

@@ -2,25 +2,28 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  padding: 12px 16px;
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+  height: 100vh;
+  min-height: 0;
 }
 
 .top-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
   gap: 10px;
+  flex-shrink: 0;
 }
 .turn-banner {
   background: var(--bg-panel);
   border: 1px solid var(--gold);
   border-radius: 10px;
-  padding: 10px 18px;
+  padding: 8px 16px;
 }
 .turn-banner strong {
   color: var(--gold);
@@ -32,9 +35,11 @@
 
 .board {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 18px;
-  margin-bottom: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 300px));
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
 }
 
 .team-group {
@@ -76,7 +81,7 @@
   background: var(--bg-card);
   border: 2px solid var(--border);
   border-radius: 12px;
-  padding: 12px;
+  padding: 8px;
   position: relative;
   transition: border-color 0.2s;
 }
@@ -431,7 +436,8 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
 }
 .action-panel h3 {
   color: var(--gold);
@@ -465,7 +471,8 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px 16px;
-  max-height: 220px;
+  flex-shrink: 0;
+  max-height: 165px;
   overflow-y: auto;
   font-size: 13px;
 }
