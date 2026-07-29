@@ -5,7 +5,7 @@ import {
   endTurn, consumeSkipIfFrozen, snapshot, resolveJesterBall, isValidTarget,
 } from '../engine/turnEngine.js';
 import { renderCharacterCard, cursedCharacterId, frozenCharacterId, revealedMarkedCharacterIds, jesterBallHolderCharacterId } from './characterCard.js';
-import { renderLogPanel } from './logPanel.js';
+import { renderLogPanel, formatLogAsText } from './logPanel.js';
 import { showModal } from './modal.js';
 import { renderRulesModal } from './rulesScreen.js';
 import { toggleFullscreen } from './fullscreen.js';
@@ -268,16 +268,64 @@ export function renderDashboard(container, game, { onRestart }) {
 
     wrap.appendChild(banner);
 
+    const logHeadingRow = document.createElement('div');
+    logHeadingRow.style.display = 'flex';
+    logHeadingRow.style.alignItems = 'center';
+    logHeadingRow.style.justifyContent = 'space-between';
+    logHeadingRow.style.margin = '0 0 8px';
     const logHeading = document.createElement('h3');
     logHeading.textContent = 'Full Match Log';
-    logHeading.style.margin = '0 0 8px';
     logHeading.style.color = 'var(--gold)';
-    wrap.appendChild(logHeading);
+    logHeadingRow.appendChild(logHeading);
+    const copyLogBtn = document.createElement('button');
+    copyLogBtn.className = 'btn btn-small';
+    copyLogBtn.textContent = 'Copy Log';
+    copyLogBtn.onclick = () => {
+      playUiClick();
+      copyLogToClipboard(copyLogBtn);
+    };
+    logHeadingRow.appendChild(copyLogBtn);
+    wrap.appendChild(logHeadingRow);
     const logPanel = renderLogPanel(game.log);
     logPanel.style.maxHeight = '400px';
     wrap.appendChild(logPanel);
 
     return wrap;
+  }
+
+  // Copies the full match log as plain text so it can be pasted elsewhere
+  // (e.g. for reporting a suspected bug). Briefly flips the button label to
+  // confirm success/failure rather than relying on a separate toast.
+  function copyLogToClipboard(btn) {
+    const text = formatLogAsText(game.log);
+    const showResult = (label) => {
+      const original = btn.textContent;
+      btn.textContent = label;
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    };
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(
+        () => showResult('Copied!'),
+        () => showResult('Copy failed')
+      );
+    } else {
+      // Fallback for contexts without the async Clipboard API (e.g. plain
+      // http:// local file access): a temporary offscreen textarea + the
+      // legacy execCommand copy path.
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showResult('Copied!');
+      } catch {
+        showResult('Copy failed');
+      }
+      document.body.removeChild(textarea);
+    }
   }
 
   function renderTopBar() {
@@ -301,6 +349,15 @@ export function renderDashboard(container, game, { onRestart }) {
       renderRulesModal(document.body);
     };
     actions.appendChild(rulesBtn);
+
+    const copyLogBtn = document.createElement('button');
+    copyLogBtn.className = 'btn btn-small';
+    copyLogBtn.textContent = 'Copy Log';
+    copyLogBtn.onclick = () => {
+      playUiClick();
+      copyLogToClipboard(copyLogBtn);
+    };
+    actions.appendChild(copyLogBtn);
 
     const fullscreenBtn = document.createElement('button');
     fullscreenBtn.className = 'btn btn-small';

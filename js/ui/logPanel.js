@@ -74,6 +74,13 @@ function labelFor(actionId) {
   return map[actionId] || actionId;
 }
 
+// Plain-text lines for the full log, in order - shared by the on-screen
+// panel and the "Copy Log" button so both always match exactly.
+export function formatLogAsText(log) {
+  const entries = log.map(formatEntry).filter(Boolean);
+  return entries.length === 0 ? 'Match started.' : entries.join('\n');
+}
+
 export function renderLogPanel(log) {
   const panel = document.createElement('div');
   panel.className = 'log-panel';
