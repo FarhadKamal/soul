@@ -518,7 +518,7 @@ export function renderDashboard(container, game, { onRestart }) {
     setTimeout(() => {
       botMoveScheduledFor = null;
       runBotMove(characterId);
-    }, 900);
+    }, 2200);
   }
 
   function runBotMove(characterId) {
