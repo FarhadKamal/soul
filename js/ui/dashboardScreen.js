@@ -9,6 +9,7 @@ import { renderLogPanel } from './logPanel.js';
 import { showModal } from './modal.js';
 import { renderRulesModal } from './rulesScreen.js';
 import { rollChaosGamble } from '../engine/random.js';
+import { chooseBotMove, chooseBotJesterBallMove } from '../engine/botPlayer.js';
 import { playActionSound, playUiClick, playKO, playVictory, playCoin, playSound, startTickLoop, stopTickLoop, startMenuMusic } from '../engine/sound.js';
 
 const COIN_FLIP_ACTIONS = new Set(['cyclonePunch']);
@@ -44,6 +45,9 @@ export function renderDashboard(container, game, { onRestart }) {
   // Character ids to show a one-time smoke/scorch burst on (Jester Ball
   // exploding on whoever "Takes" it) - same consume-once-per-render pattern.
   let smokeCharacterIds = new Set();
+  // Guards against scheduling more than one bot-move timeout for the same
+  // character across repeated renders while its turn is still pending.
+  let botMoveScheduledFor = null;
 
   function markHitFromResult(result) {
     if (!result) return;
@@ -418,6 +422,17 @@ export function renderDashboard(container, game, { onRestart }) {
     h3.textContent = `${def.name}'s turn`;
     panel.appendChild(h3);
 
+    if (isPCCharacter(activeCharId)) {
+      clearTurnTimer();
+      clearBallTimer();
+      const hint = document.createElement('div');
+      hint.className = 'targeting-hint';
+      hint.textContent = `${def.name} (PC) is thinking...`;
+      panel.appendChild(hint);
+      scheduleBotMove(activeCharId);
+      return panel;
+    }
+
     if (armedAction) {
       startTurnTimer(activeCharId);
       const hint = document.createElement('div');
@@ -485,6 +500,51 @@ export function renderDashboard(container, game, { onRestart }) {
     });
     panel.appendChild(btnRow);
     return panel;
+  }
+
+  function isPCCharacter(characterId) {
+    const character = game.characters[characterId];
+    if (!character) return false;
+    const player = game.players.find((p) => p.id === character.ownerId);
+    return !!player?.isPC;
+  }
+
+  // Schedules a bot's move on a short delay (so PC turns are readable rather
+  // than instant) - guarded so repeated renders while the delay is pending
+  // don't stack up multiple timeouts for the same character.
+  function scheduleBotMove(characterId) {
+    if (botMoveScheduledFor === characterId) return;
+    botMoveScheduledFor = characterId;
+    setTimeout(() => {
+      botMoveScheduledFor = null;
+      runBotMove(characterId);
+    }, 900);
+  }
+
+  function runBotMove(characterId) {
+    const character = game.characters[characterId];
+    if (!character || character.isKO) return;
+    const isBallHolder = game.jesterBall && game.jesterBall.holderCharacterId === characterId
+      && !hasCharacterActedThisTurn(game, characterId);
+    if (isBallHolder) {
+      const move = chooseBotJesterBallMove(character, game);
+      pushUndoSnapshot();
+      finishJesterBall(move.choice, move.targetId);
+      return;
+    }
+    const move = chooseBotMove(character, game);
+    if (!move) {
+      // No usable action at all - shouldn't normally happen since
+      // getUsableActions() gates this, but fail safe rather than stall.
+      markCharacterActed(game, characterId);
+      render();
+      return;
+    }
+    pushUndoSnapshot();
+    // isAuto: true reuses the same "resolve fully, no armed follow-up" path
+    // used for timer-expiry auto-picks - a bot's Soul Swap follow-up (etc.)
+    // must also resolve on its own rather than arming a human target-click.
+    runResolvedAction(characterId, move.actionId, move.targetId, true);
   }
 
   function onActionChosen(characterId, action) {

@@ -7,6 +7,7 @@ export function renderSetupScreen(container, onStart) {
   let playerCount = 0;
   let picksPerPlayer = 0;
   const picks = []; // array of arrays of characterId, index = player index
+  const isPC = []; // array of booleans, index = player index - human by default
 
   function render() {
     container.innerHTML = '';
@@ -47,7 +48,11 @@ export function renderSetupScreen(container, onStart) {
         playerCount = opt.players;
         picksPerPlayer = opt.picks;
         picks.length = 0;
-        for (let i = 0; i < playerCount; i++) picks.push([]);
+        isPC.length = 0;
+        for (let i = 0; i < playerCount; i++) {
+          picks.push([]);
+          isPC.push(false);
+        }
         render();
       };
       modeSelect.appendChild(btn);
@@ -64,9 +69,25 @@ export function renderSetupScreen(container, onStart) {
         const panel = document.createElement('div');
         panel.className = 'player-panel';
 
+        const headerRow = document.createElement('div');
+        headerRow.className = 'player-panel-header';
+
         const h3 = document.createElement('h3');
         h3.textContent = `Player ${pIndex + 1}`;
-        panel.appendChild(h3);
+        headerRow.appendChild(h3);
+
+        const pcToggle = document.createElement('button');
+        pcToggle.type = 'button';
+        pcToggle.className = 'pc-toggle' + (isPC[pIndex] ? ' active' : '');
+        pcToggle.textContent = isPC[pIndex] ? '🖥 PC' : '🧑 Human';
+        pcToggle.onclick = () => {
+          playUiClick();
+          isPC[pIndex] = !isPC[pIndex];
+          render();
+        };
+        headerRow.appendChild(pcToggle);
+
+        panel.appendChild(headerRow);
 
         const status = document.createElement('div');
         status.className = 'pick-status';
@@ -116,6 +137,7 @@ export function renderSetupScreen(container, onStart) {
           id: `player-${i + 1}`,
           name: `Player ${i + 1}`,
           characterIds,
+          isPC: isPC[i],
         }));
         onStart(mode, playerPicks);
       };

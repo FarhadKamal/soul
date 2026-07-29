@@ -45,23 +45,24 @@ export function createCharacter(defId, ownerId) {
   };
 }
 
-export function createPlayer(id, name, characterIds) {
+export function createPlayer(id, name, characterIds, isPC = false) {
   return {
     id,
     name,
     characterIds: [...characterIds],
     isEliminated: false,
+    isPC,
   };
 }
 
 export function createGame(mode, playerPicks) {
-  // playerPicks: [{ id, name, characterIds: [...] }, ...]
+  // playerPicks: [{ id, name, characterIds: [...], isPC }, ...]
   const characters = {};
   const players = playerPicks.map((p) => {
     p.characterIds.forEach((cid) => {
       characters[cid] = createCharacter(cid, p.id);
     });
-    return createPlayer(p.id, p.name, p.characterIds);
+    return createPlayer(p.id, p.name, p.characterIds, p.isPC);
   });
 
   return {

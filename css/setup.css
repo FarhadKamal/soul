@@ -62,9 +62,30 @@
   border-radius: 12px;
   padding: 16px;
 }
+.player-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
 .player-panel h3 {
   color: var(--gold);
-  margin-bottom: 4px;
+  margin: 0;
+}
+.pc-toggle {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-dim);
+}
+.pc-toggle.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(212, 175, 55, 0.12);
 }
 .player-panel .pick-status {
   color: var(--text-dim);
