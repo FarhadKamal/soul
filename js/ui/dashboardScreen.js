@@ -816,6 +816,10 @@ export function renderDashboard(container, game, { onRestart }) {
     const t = game.characters[targetId];
     if (!t || t.isKO || t.id === holderId) return false;
     if (t.id === game.jesterBall.thrownByCharacterId) return true; // Return
+    // Pass only ever goes to an enemy, same as every other targeted action -
+    // passing to your own teammate doesn't make sense strategically.
+    const holder = game.characters[holderId];
+    if (t.ownerId === holder.ownerId) return false;
     return game.jesterBall.canPass; // Pass
   }
 
