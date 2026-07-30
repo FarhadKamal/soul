@@ -44,8 +44,11 @@ export const jesterBallResolution = {
     label: 'Return to Boingo',
     execute(game, log) {
       const { thrownByCharacterId } = game.jesterBall;
-      applyHeal(game, thrownByCharacterId, 4);
-      log.push({ type: 'jester-ball-return', boingoId: thrownByCharacterId });
+      // applyHeal no-ops (returns 0) if Boingo is already KO'd or already
+      // at full hearts - report what actually happened rather than always
+      // claiming the full +4, which would be misleading if he's dead.
+      const healed = applyHeal(game, thrownByCharacterId, 4);
+      log.push({ type: 'jester-ball-return', boingoId: thrownByCharacterId, healed });
       game.jesterBall = null;
     },
   },

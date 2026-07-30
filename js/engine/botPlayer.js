@@ -392,10 +392,11 @@ export function chooseBotJesterBallMove(character, game) {
       if (targetId) return { choice: 'pass', targetId };
     }
   }
-  // Return only makes sense if Boingo is a teammate (or this character IS
-  // Boingo) - Return always heals him +4 regardless of who returns it, so
-  // handing a free heal to an enemy Boingo would be self-defeating.
-  if (boingo && boingo.ownerId === character.ownerId) {
+  // Return only makes sense if Boingo is a living teammate (or this
+  // character IS Boingo) - Return always heals him +4 regardless of who
+  // returns it, so handing a free heal to an enemy Boingo would be
+  // self-defeating, and there's no one to heal if he's already KO'd.
+  if (boingo && !boingo.isKO && boingo.ownerId === character.ownerId) {
     return { choice: 'return_' };
   }
   // Otherwise Take is the only sensible remaining option.
