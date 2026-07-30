@@ -52,9 +52,9 @@ function formatEntry(entry) {
       return `Akyros placed a Hidden Mark (target concealed)`;
     case 'jester-ball-return': {
       const healed = entry.healed ?? 4;
-      return healed > 0
-        ? `Jester Ball returned to ${nameOf(entry.boingoId)} — +${healed} hearts`
-        : `Jester Ball returned, but ${nameOf(entry.boingoId)} was already KO'd — no effect`;
+      if (healed > 0) return `Jester Ball returned to ${nameOf(entry.boingoId)} — +${healed} hearts`;
+      const reason = entry.wasKO ? "already KO'd" : 'already at full hearts';
+      return `Jester Ball returned to ${nameOf(entry.boingoId)}, but he was ${reason} — no effect`;
     }
     case 'jester-ball-pass':
       return `${nameOf(entry.fromCharacterId)} passed the Jester Ball to ${nameOf(entry.toCharacterId)}`;
