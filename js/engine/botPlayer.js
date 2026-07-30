@@ -257,10 +257,20 @@ function chooseAthenaMove(character, game, usable) {
     return { actionId: 'divineRestore', targetId: null };
   }
   // Curse whoever's the biggest threat, so their own future hits against
-  // Athena mirror back onto them too.
-  const targets = validTargetsFor(game, character, 'curseStrike');
-  const targetId = biggestThreatTarget(game, character, targets) || lowestHeartsTarget(game, targets);
-  return { actionId: 'curseStrike', targetId: targetId || targets[0] || null };
+  // Athena mirror back onto them too. Curse Strike may not actually be
+  // usable right now (no valid target - e.g. everyone else is KO'd or the
+  // only remaining enemy is untargetable), in which case fall back to
+  // Divine Restore if it's still available rather than firing a curse
+  // with no legal target.
+  if (byId.curseStrike) {
+    const targets = validTargetsFor(game, character, 'curseStrike');
+    const targetId = biggestThreatTarget(game, character, targets) || lowestHeartsTarget(game, targets);
+    if (targetId) return { actionId: 'curseStrike', targetId };
+  }
+  if (byId.divineRestore) {
+    return { actionId: 'divineRestore', targetId: null };
+  }
+  return null;
 }
 
 function chooseBoingoMove(character, game, usable) {
@@ -302,10 +312,17 @@ export function chooseBotMove(character, game) {
   const chooser = MOVE_CHOOSERS[character.id] || chooseFallbackMove;
   const move = chooser(character, game, usable);
   if (!move) return chooseFallbackMove(character, game, usable);
-  // Safety net: if the chosen target somehow isn't valid (e.g. a scoring
-  // helper returned null), fall back to a sensible default rather than
-  // letting an invalid move through.
-  if (move.targetId === null && usable.find((a) => a.actionId === move.actionId)?.needsTarget) {
+  // Safety net: a per-character chooser can return an action that isn't
+  // actually in `usable` (e.g. it always falls back to a specific action
+  // without checking whether that action currently has a valid target -
+  // this has happened for real, producing a "Curse Strike on null" or
+  // "Thunder Wrath on null" move). Re-route through the generic fallback
+  // whenever that happens, rather than letting an illegal move through.
+  const usableEntry = usable.find((a) => a.actionId === move.actionId);
+  if (!usableEntry) {
+    return chooseFallbackMove(character, game, usable);
+  }
+  if (move.targetId === null && usableEntry.needsTarget) {
     return { actionId: move.actionId, targetId: pickDefaultTarget(game, character, move.actionId) };
   }
   return move;
