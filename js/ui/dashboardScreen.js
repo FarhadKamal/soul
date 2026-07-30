@@ -446,7 +446,8 @@ export function renderDashboard(container, game, { onRestart }) {
 
     game.players.forEach((player, playerIndex) => {
       const group = document.createElement('div');
-      group.className = 'team-group' + (player.id === activePlayerId ? ' active-team' : '');
+      const sizeClass = player.characterIds.length === 2 ? ' team-size-2' : '';
+      group.className = 'team-group' + sizeClass + (player.id === activePlayerId ? ' active-team' : '');
 
       const header = document.createElement('div');
       header.className = 'team-header ' + PLAYER_COLOR_CLASSES[playerIndex % PLAYER_COLOR_CLASSES.length];

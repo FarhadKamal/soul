@@ -54,6 +54,12 @@
   padding: 12px;
   background: rgba(255, 255, 255, 0.02);
 }
+/* A team with 2 characters needs roughly double the width so each card
+   stays the same size as a 1-character team's card (4-player mode). */
+.team-group.team-size-2 {
+  flex: 2;
+  max-width: 680px;
+}
 .team-group.active-team {
   border-color: var(--gold);
   background: rgba(212, 175, 55, 0.06);
