@@ -1,3 +1,4 @@
+import './engine/consoleCapture.js';
 import { createGame } from './engine/state.js';
 import { renderSetupScreen } from './ui/setupScreen.js';
 import { renderDashboard } from './ui/dashboardScreen.js';

@@ -12,6 +12,7 @@ import { toggleFullscreen } from './fullscreen.js';
 import { rollChaosGamble } from '../engine/random.js';
 import { chooseBotMove, chooseBotJesterBallMove } from '../engine/botPlayer.js';
 import { playActionSound, playUiClick, playKO, playVictory, playCoin, playSound, startTickLoop, stopTickLoop, startMenuMusic } from '../engine/sound.js';
+import { getConsoleLogText } from '../engine/consoleCapture.js';
 
 const COIN_FLIP_ACTIONS = new Set(['cyclonePunch']);
 const CHAOS_GAMBLE_ACTIONS = new Set(['chaosGamble']);
@@ -277,14 +278,26 @@ export function renderDashboard(container, game, { onRestart }) {
     logHeading.textContent = 'Full Match Log';
     logHeading.style.color = 'var(--gold)';
     logHeadingRow.appendChild(logHeading);
+    const logButtons = document.createElement('div');
+    logButtons.style.display = 'flex';
+    logButtons.style.gap = '8px';
     const copyLogBtn = document.createElement('button');
     copyLogBtn.className = 'btn btn-small';
     copyLogBtn.textContent = 'Copy Log';
     copyLogBtn.onclick = () => {
       playUiClick();
-      copyLogToClipboard(copyLogBtn);
+      copyTextToClipboard(copyLogBtn, formatLogAsText(game));
     };
-    logHeadingRow.appendChild(copyLogBtn);
+    logButtons.appendChild(copyLogBtn);
+    const copyConsoleBtn = document.createElement('button');
+    copyConsoleBtn.className = 'btn btn-small';
+    copyConsoleBtn.textContent = 'Copy Console Log';
+    copyConsoleBtn.onclick = () => {
+      playUiClick();
+      copyTextToClipboard(copyConsoleBtn, getConsoleLogText());
+    };
+    logButtons.appendChild(copyConsoleBtn);
+    logHeadingRow.appendChild(logButtons);
     wrap.appendChild(logHeadingRow);
     const logPanel = renderLogPanel(game);
     logPanel.style.maxHeight = '400px';
@@ -293,11 +306,11 @@ export function renderDashboard(container, game, { onRestart }) {
     return wrap;
   }
 
-  // Copies the full match log as plain text so it can be pasted elsewhere
-  // (e.g. for reporting a suspected bug). Briefly flips the button label to
-  // confirm success/failure rather than relying on a separate toast.
-  function copyLogToClipboard(btn) {
-    const text = formatLogAsText(game);
+  // Copies arbitrary text (match log or captured console output) to the
+  // clipboard so it can be pasted elsewhere (e.g. for reporting a
+  // suspected bug). Briefly flips the button label to confirm
+  // success/failure rather than relying on a separate toast.
+  function copyTextToClipboard(btn, text) {
     const showResult = (label) => {
       const original = btn.textContent;
       btn.textContent = label;
@@ -355,9 +368,18 @@ export function renderDashboard(container, game, { onRestart }) {
     copyLogBtn.textContent = 'Copy Log';
     copyLogBtn.onclick = () => {
       playUiClick();
-      copyLogToClipboard(copyLogBtn);
+      copyTextToClipboard(copyLogBtn, formatLogAsText(game));
     };
     actions.appendChild(copyLogBtn);
+
+    const copyConsoleBtn = document.createElement('button');
+    copyConsoleBtn.className = 'btn btn-small';
+    copyConsoleBtn.textContent = 'Copy Console Log';
+    copyConsoleBtn.onclick = () => {
+      playUiClick();
+      copyTextToClipboard(copyConsoleBtn, getConsoleLogText());
+    };
+    actions.appendChild(copyConsoleBtn);
 
     const fullscreenBtn = document.createElement('button');
     fullscreenBtn.className = 'btn btn-small';
