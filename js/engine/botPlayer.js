@@ -72,6 +72,28 @@ function isCursedByLiveAthena(game, character) {
 
 const LOW_HEARTS_THRESHOLD = 3;
 
+// Focus-fire: prefer whichever legal target is already the MOST hurt
+// relative to their own max hearts (i.e. closest to dying), so independent
+// bots naturally converge on finishing someone off instead of each
+// spreading damage across different targets every turn. Only kicks in once
+// a target has actually taken damage (missingHearts > 0) - otherwise it's
+// equivalent to "attack whoever's weakest" even at full health, which
+// isn't really "focus fire," just a baseline preference.
+function focusFireTarget(game, targetIds) {
+  const wounded = targetIds.filter((tid) => {
+    const t = game.characters[tid];
+    return t.hearts < t.maxHearts;
+  });
+  if (wounded.length === 0) return null;
+  return wounded.reduce((best, tid) => {
+    const t = game.characters[tid];
+    const b = game.characters[best];
+    const tMissing = t.maxHearts - t.hearts;
+    const bMissing = b.maxHearts - b.hearts;
+    return tMissing > bMissing ? tid : best;
+  });
+}
+
 function pickDefaultTarget(game, character, actionId) {
   const targets = validTargetsFor(game, character, actionId);
   if (targets.length === 0) return null;
@@ -83,7 +105,10 @@ function pickDefaultTarget(game, character, actionId) {
     return false;
   });
   const pool = nonAthenaSafe.length > 0 ? nonAthenaSafe : targets;
-  return biggestThreatTarget(game, character, pool) || lowestHeartsTarget(game, pool);
+  // Priority: secure a kill on whoever's already most wounded (focus fire)
+  // over just retaliating against the most recent attacker - finishing a
+  // target off is worth more than spreading damage around.
+  return focusFireTarget(game, pool) || biggestThreatTarget(game, character, pool) || lowestHeartsTarget(game, pool);
 }
 
 // ---- Per-character move selection ----
@@ -247,8 +272,7 @@ function chooseBladeMove(character, game, usable) {
   if (streakTarget && targets.includes(streakTarget)) {
     return { actionId: 'bloodHunt', targetId: streakTarget };
   }
-  const targetId = biggestThreatTarget(game, character, targets) || lowestHeartsTarget(game, targets);
-  return { actionId: 'bloodHunt', targetId: targetId || targets[0] };
+  return { actionId: 'bloodHunt', targetId: pickDefaultTarget(game, character, 'bloodHunt') };
 }
 
 function chooseAthenaMove(character, game, usable) {
@@ -256,15 +280,30 @@ function chooseAthenaMove(character, game, usable) {
   if (byId.divineRestore && character.hearts <= LOW_HEARTS_THRESHOLD) {
     return { actionId: 'divineRestore', targetId: null };
   }
-  // Curse whoever's the biggest threat, so their own future hits against
-  // Athena mirror back onto them too. Curse Strike may not actually be
-  // usable right now (no valid target - e.g. everyone else is KO'd or the
-  // only remaining enemy is untargetable), in which case fall back to
-  // Divine Restore if it's still available rather than firing a curse
-  // with no legal target.
+  // Curse Strike may not actually be usable right now (no valid target -
+  // e.g. everyone else is KO'd or the only remaining enemy is untargetable),
+  // in which case fall back to Divine Restore if it's still available
+  // rather than firing a curse with no legal target.
   if (byId.curseStrike) {
     const targets = validTargetsFor(game, character, 'curseStrike');
-    const targetId = biggestThreatTarget(game, character, targets) || lowestHeartsTarget(game, targets);
+    // Keep the curse on whoever's already cursed if they're still a legal
+    // target - re-picking a new target every turn for no reason just makes
+    // the mirror unpredictable and wastes the fact the curse never expires
+    // on its own. Only switch when forced (current target invalid/dead) or
+    // when a clearly healthier/more dangerous target exists to curse
+    // instead - a target with more hearts left can keep attacking Athena
+    // for longer, making the eventual mirror damage add up more.
+    const currentCursed = character.special.curseTargetCharacterId;
+    if (currentCursed && targets.includes(currentCursed)) {
+      const healthier = targets.find((tid) =>
+        game.characters[tid].hearts > game.characters[currentCursed].hearts + 2
+      );
+      return { actionId: 'curseStrike', targetId: healthier || currentCursed };
+    }
+    const targetId = targets.reduce((best, tid) => {
+      if (!best) return tid;
+      return game.characters[tid].hearts > game.characters[best].hearts ? tid : best;
+    }, null);
     if (targetId) return { actionId: 'curseStrike', targetId };
   }
   if (byId.divineRestore) {
