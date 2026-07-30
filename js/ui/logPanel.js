@@ -31,8 +31,6 @@ function formatEntry(entry) {
     }
     case 'passive':
       return entry.text;
-    case 'debug':
-      return entry.text;
     case 'freeze-continue':
       return `Time Freeze continues on ${nameOf(entry.targetCharacterId)}`;
     case 'freeze-end':

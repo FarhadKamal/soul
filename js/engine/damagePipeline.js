@@ -50,22 +50,8 @@ export function applyDamage(game, log, {
     result.absorbed = absorbed;
   }
 
-  // TEMP DIAGNOSTIC: investigating reports of Blade's Rebirth firing with
-  // more hearts apparently remaining than the log's own damage numbers
-  // suggest. Remove once resolved.
-  if (target.id === 'blade') {
-    log.push({
-      type: 'debug',
-      text: `[debug] blade hearts ${target.hearts} -> attacked for raw=${amount} shieldAbsorbed=${result.absorbed} net=${amt} by ${sourceCharacterId} isMirror=${isMirror}`,
-    });
-  }
-
   target.hearts = Math.max(0, target.hearts - amt);
   result.amountDealt = amt;
-
-  if (target.id === 'blade') {
-    log.push({ type: 'debug', text: `[debug] blade hearts now ${target.hearts}` });
-  }
 
   // Blade Rebirth: automatic, intercepts the KO the instant it would happen.
   if (target.id === 'blade' && target.hearts === 0 && !target.special.rebirthUsed) {
