@@ -186,6 +186,30 @@ function chooseZerathysMove(character, game, usable) {
       return { actionId: 'soulSwap', targetId: best };
     }
   }
+  // Self-curse-mirror safety check: if Zerathys is cursed and his only
+  // legal Thunder Wrath target is Athena herself (no safe alternative
+  // exists), landing that hit mirrors the SAME damage back onto him. At
+  // low hearts, waiting to charge further can make the EVENTUAL mirror
+  // self-lethal even though the current charge would still be survivable
+  // (and doesn't kill Athena either) - cash in now at the safe/current
+  // charge rather than charging toward a bigger, fatal mirror hit.
+  const wrathTargetsNow = validTargetsFor(game, character, 'thunderWrath');
+  const onlyTargetIsCursingAthena = wrathTargetsNow.length === 1
+    && wrathTargetsNow[0] === 'athena'
+    && isCursedByLiveAthena(game, character);
+  if (onlyTargetIsCursingAthena && chargeCount < 2) {
+    const athena = game.characters['athena'];
+    const wouldKillAthenaNow = athena.hearts <= Math.max(0, wrathDamage - athena.shield);
+    const mirrorSurvivableNow = character.hearts > wrathDamage;
+    const nextChargeDamage = wrathDamage + 1;
+    const mirrorSurvivableIfCharged = character.hearts > nextChargeDamage;
+    // Charging further would push the eventual mirror past what's
+    // survivable, but cashing in at the CURRENT charge is still safe (or
+    // already lethal to Athena) - take the smaller, safe hit now instead.
+    if (!wouldKillAthenaNow && mirrorSurvivableNow && !mirrorSurvivableIfCharged) {
+      return { actionId: 'thunderWrath', targetId: 'athena' };
+    }
+  }
   // At max charge, always cash in - no reason to hold at the cap.
   if (chargeCount >= 2) {
     return { actionId: 'thunderWrath', targetId: pickDefaultTarget(game, character, 'thunderWrath') };
