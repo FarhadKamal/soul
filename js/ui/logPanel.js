@@ -78,20 +78,25 @@ function labelFor(actionId) {
   return map[actionId] || actionId;
 }
 
-// Lines listing every player's seat number and character(s), so a copied
-// log is self-contained and never requires guessing who played what from
-// the events alone. 2v2 (any player with >1 character) reads as a single
-// "Team 1: X, Y vs Team 2: A, B" line; 1v1/4-player list one line per seat,
-// e.g. "1 Zerathys", "2 Chronox", "3 Athena", "4 Boingo".
+function pcTag(player) {
+  return player.isPC ? ' (PC)' : ' (Human)';
+}
+
+// Lines listing every player's seat number, character(s), and whether
+// they're PC- or human-controlled, so a copied log is fully self-contained
+// and never requires guessing who played what from the events alone. 2v2
+// (any player with >1 character) reads as a single "Team 1: X, Y (PC) vs
+// Team 2: A, B (Human)" line; 1v1/4-player list one line per seat, e.g.
+// "1 Zerathys (Human)", "2 Chronox (PC)".
 function rosterLines(game) {
   const isTeamMode = game.players.some((p) => p.characterIds.length > 1);
   if (isTeamMode) {
     const teams = game.players.map((p, i) =>
-      `Team ${i + 1}: ${p.characterIds.map(nameOf).join(', ')}`
+      `Team ${i + 1}: ${p.characterIds.map(nameOf).join(', ')}${pcTag(p)}`
     );
     return [teams.join(' vs ')];
   }
-  return game.players.map((p, i) => `${i + 1} ${p.characterIds.map(nameOf).join(', ')}`);
+  return game.players.map((p, i) => `${i + 1} ${p.characterIds.map(nameOf).join(', ')}${pcTag(p)}`);
 }
 
 // Plain-text lines for the full log, in order - shared by the on-screen

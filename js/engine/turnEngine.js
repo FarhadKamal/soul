@@ -61,9 +61,14 @@ export function executeAction(game, characterId, actionId, targetId, extra) {
   const actionDef = mod.actions[actionId];
   const log = [];
   const result = actionDef.execute(character, targetId, game, log, extra);
-  // Athena's curse-mirror log entry is deferred until here so it lands
-  // AFTER the triggering attack's own log entry, not before it.
+  // Blade's Rebirth and Athena's curse-mirror log entries are deferred
+  // until here so they land AFTER the triggering attack's own log entry,
+  // not before it. Rebirth can also fire on the MIRROR hit itself (curse
+  // damage killing Blade), so check both the direct result and, once the
+  // mirror's own entry is queued, the mirror result too.
+  if (result?.rebirthLogEntry) log.push(result.rebirthLogEntry);
   if (result?.mirrorLogEntry) log.push(result.mirrorLogEntry);
+  if (result?.mirrorResult?.rebirthLogEntry) log.push(result.mirrorResult.rebirthLogEntry);
   applyEndOfActionChecks(game);
   game.log.push(...log, { type: 'end-action', round: game.round, characterId, actionId, targetId });
   return result;
@@ -73,6 +78,7 @@ export function resolveJesterBall(game, holderCharacterId, choice, extra) {
   const log = [];
   const res = boingo.jesterBallResolution[choice];
   const result = res.execute(game, log, extra);
+  if (result?.rebirthLogEntry) log.push(result.rebirthLogEntry);
   applyEndOfActionChecks(game);
   game.log.push(...log, { type: 'end-action', round: game.round, characterId: holderCharacterId, actionId: `jesterBall:${choice}` });
   return result;

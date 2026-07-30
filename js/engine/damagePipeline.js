@@ -68,7 +68,12 @@ export function applyDamage(game, log, {
       (c) => c.id === 'athena' && c.special.curseTargetCharacterId === target.id
     );
     if (athena) athena.special.curseTargetCharacterId = null;
-    log.push({ type: 'rebirth', targetCharacterId });
+    // Deferred (not pushed to `log` here) and returned on the result so
+    // executeAction() can push it AFTER the triggering attack's own log
+    // entry - otherwise it lands BEFORE that entry in the log, since this
+    // runs mid-way through the ability's execute(), before its own
+    // log.push() for the attack/special line itself.
+    result.rebirthLogEntry = { type: 'rebirth', targetCharacterId };
   } else if (target.hearts === 0) {
     target.isKO = true;
     result.koTriggered = true;
