@@ -186,28 +186,50 @@ function chooseZerathysMove(character, game, usable) {
       return { actionId: 'soulSwap', targetId: best };
     }
   }
-  // Self-curse-mirror safety check: if Zerathys is cursed and his only
-  // legal Thunder Wrath target is Athena herself (no safe alternative
-  // exists), landing that hit mirrors the SAME damage back onto him. At
-  // low hearts, waiting to charge further can make the EVENTUAL mirror
-  // self-lethal even though the current charge would still be survivable
-  // (and doesn't kill Athena either) - cash in now at the safe/current
-  // charge rather than charging toward a bigger, fatal mirror hit.
+  // Self-curse-mirror handling: if Zerathys is cursed and his only legal
+  // Thunder Wrath target is Athena herself (no safe alternative exists),
+  // landing that hit mirrors the SAME damage back onto him.
   const wrathTargetsNow = validTargetsFor(game, character, 'thunderWrath');
   const onlyTargetIsCursingAthena = wrathTargetsNow.length === 1
     && wrathTargetsNow[0] === 'athena'
     && isCursedByLiveAthena(game, character);
-  if (onlyTargetIsCursingAthena && chargeCount < 2) {
+  if (onlyTargetIsCursingAthena) {
     const athena = game.characters['athena'];
-    const wouldKillAthenaNow = athena.hearts <= Math.max(0, wrathDamage - athena.shield);
+    const maxChargeDamage = 3;
     const mirrorSurvivableNow = character.hearts > wrathDamage;
-    const nextChargeDamage = wrathDamage + 1;
-    const mirrorSurvivableIfCharged = character.hearts > nextChargeDamage;
-    // Charging further would push the eventual mirror past what's
-    // survivable, but cashing in at the CURRENT charge is still safe (or
-    // already lethal to Athena) - take the smaller, safe hit now instead.
-    if (!wouldKillAthenaNow && mirrorSurvivableNow && !mirrorSurvivableIfCharged) {
+    const wouldKillAthenaNow = athena.hearts <= Math.max(0, wrathDamage - athena.shield);
+    // Checked FIRST, regardless of whether the current hit happens to be
+    // survivable: if Zerathys can never actually WIN this 1v1 by trading
+    // small safe hits (he'll always be behind since he's taking equal
+    // mirror damage each time, same as Athena, but she gets to heal/keep
+    // cursing for free), the only way to come out ahead is a mutual kill -
+    // charge all the way to max and cash in for a hit that finishes them
+    // both off, if Athena's hearts make that reachable. Charging itself
+    // costs nothing here (Curse Strike doesn't damage him), so this is
+    // always worth pursuing over a smaller poke that doesn't progress
+    // toward a win, unless the current charge already secures an outright
+    // kill on its own (handled above) or charging further would leave
+    // Athena still alive and unkillable even at max charge.
+    const canForceMutualKillAtMax = !wouldKillAthenaNow
+      && athena.hearts <= Math.max(0, maxChargeDamage - athena.shield);
+    if (canForceMutualKillAtMax) {
+      if (chargeCount < 2 && byId.chargeUp) {
+        return { actionId: 'chargeUp', targetId: null };
+      }
       return { actionId: 'thunderWrath', targetId: 'athena' };
+    }
+    if (!mirrorSurvivableNow) {
+      // No mutual kill reachable and the current hit would kill him for
+      // nothing - nothing better to do than attack now, so fall through.
+    } else if (!wouldKillAthenaNow && chargeCount < 2) {
+      const nextChargeDamage = wrathDamage + 1;
+      const mirrorSurvivableIfCharged = character.hearts > nextChargeDamage;
+      if (!mirrorSurvivableIfCharged) {
+        // Charging further would push the eventual mirror past what's
+        // survivable, but cashing in at the CURRENT charge is still safe -
+        // take the smaller, safe hit now instead of risking it later.
+        return { actionId: 'thunderWrath', targetId: 'athena' };
+      }
     }
   }
   // At max charge, always cash in - no reason to hold at the cap.

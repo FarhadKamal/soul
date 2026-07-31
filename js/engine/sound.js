@@ -13,10 +13,12 @@ function get(name) {
 let musicAudio = null;
 let musicTrack = null; // 'menu' | 'battle' | null
 
-// Battle track pool - one is picked at random each time a new match starts,
-// so back-to-back matches don't always hear the same loop. Drop more mp3
-// files into assets/sounds/ and add their names here to grow the pool.
+// Battle/menu track pools - one is picked at random each time the match
+// (or the setup screen) starts, so repeated visits don't always hear the
+// same loop. Drop more mp3 files into assets/sounds/ and add their names
+// here to grow either pool.
 const BATTLE_TRACKS = ['bgm-battle.mp3', 'bgm-battle-2.mp3', 'bgm-battle-3.mp3'];
+const MENU_TRACKS = ['bgm-menu.mp3', 'bgm-menu-2.mp3', 'bgm-menu-3.mp3'];
 
 function startMusic(track, file, volume) {
   if (musicTrack === track) return; // already playing this track
@@ -34,7 +36,12 @@ function startMusic(track, file, volume) {
 }
 
 export function startMenuMusic() {
-  startMusic('menu', 'bgm-menu.mp3', 0.3);
+  // Same "force a fresh pick" reasoning as startBattleMusic() - otherwise
+  // returning to the menu (e.g. after New Match) would silently keep
+  // whichever menu track was already playing instead of re-rolling.
+  musicTrack = null;
+  const file = MENU_TRACKS[Math.floor(Math.random() * MENU_TRACKS.length)];
+  startMusic('menu', file, 0.3);
 }
 
 export function startBattleMusic() {
