@@ -93,6 +93,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // "lose" roll) - same explicit-timer pattern as the flags above.
   let boingoMissCharacterIds = new Set();
   let boingoMissClearTimer = null;
+  // Character ids to briefly show Chronox's Cyclone Punch portrait on -
+  // same explicit-timer pattern as the flags above.
+  let chronoxCycloneCharacterIds = new Set();
+  let chronoxCycloneClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -534,6 +538,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isAkyrosDodge: akyrosDodgeCharacterIds.has(character.id),
           isBoingoHardpunch: boingoHardpunchCharacterIds.has(character.id),
           isBoingoMiss: boingoMissCharacterIds.has(character.id),
+          isChronoxCyclone: chronoxCycloneCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -756,6 +761,9 @@ export function renderDashboard(container, game, { onRestart }) {
       const rolledFlip = game.log.slice(logBefore).find((e) => e.flip)?.flip;
       if (actionId === 'cyclonePunch' && rolledFlip === 'heads' && !coinResult?.dodged) {
         shakeCharacterIds.add(targetId);
+      }
+      if (actionId === 'cyclonePunch' && !coinResult?.dodged && !game.characters[characterId].isKO) {
+        setChronoxCyclone(characterId);
       }
       playCoin();
       playPostActionSounds(actionId, targetId, logBefore);
@@ -1039,6 +1047,18 @@ export function renderDashboard(container, game, { onRestart }) {
     boingoMissClearTimer = setTimeout(() => {
       boingoMissClearTimer = null;
       boingoMissCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Chronox's Cyclone Punch portrait for a fixed duration - same
+  // reasoning as setLaughing above.
+  function setChronoxCyclone(characterId) {
+    chronoxCycloneCharacterIds.add(characterId);
+    if (chronoxCycloneClearTimer) clearTimeout(chronoxCycloneClearTimer);
+    chronoxCycloneClearTimer = setTimeout(() => {
+      chronoxCycloneClearTimer = null;
+      chronoxCycloneCharacterIds = new Set();
       render();
     }, 1600);
   }
