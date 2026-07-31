@@ -109,6 +109,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // explicit-timer pattern as the flags above.
   let tharoxTossCharacterIds = new Set();
   let tharoxTossClearTimer = null;
+  // Character ids to briefly show Athena's Curse Strike portrait on - same
+  // explicit-timer pattern as the flags above.
+  let athenaCurseCharacterIds = new Set();
+  let athenaCurseClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -554,6 +558,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isAkyrosHidden: akyrosHiddenCharacterIds.has(character.id),
           isZerathysCharge: zerathysChargeCharacterIds.has(character.id),
           isTharoxToss: tharoxTossCharacterIds.has(character.id),
+          isAthenaCurse: athenaCurseCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -872,6 +877,9 @@ export function renderDashboard(container, game, { onRestart }) {
     if (actionId === 'titanToss' && !game.characters[characterId].isKO) {
       setTharoxToss(characterId);
     }
+    if (actionId === 'curseStrike' && !game.characters[characterId].isKO) {
+      setAthenaCurse(characterId);
+    }
     if ((actionId === 'titanSmash' || actionId === 'glorySmash') && targetId && !result?.dodged && result?.amountDealt > 0) {
       shakeCharacterIds.add(targetId);
     }
@@ -1119,6 +1127,18 @@ export function renderDashboard(container, game, { onRestart }) {
     tharoxTossClearTimer = setTimeout(() => {
       tharoxTossClearTimer = null;
       tharoxTossCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Athena's Curse Strike portrait for a fixed duration - same
+  // reasoning as setLaughing above.
+  function setAthenaCurse(characterId) {
+    athenaCurseCharacterIds.add(characterId);
+    if (athenaCurseClearTimer) clearTimeout(athenaCurseClearTimer);
+    athenaCurseClearTimer = setTimeout(() => {
+      athenaCurseClearTimer = null;
+      athenaCurseCharacterIds = new Set();
       render();
     }, 1600);
   }
