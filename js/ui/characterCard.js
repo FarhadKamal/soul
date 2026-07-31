@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isVeloryaStrike, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -111,13 +111,14 @@ export function renderCharacterCard(character, {
   // Curse Strike is cast, Tharox briefly flashes a portrait when Glory Smash
   // OR Titan Toss triggers, Zerathys briefly flashes a portrait when Soul
   // Swap OR Charge Up triggers, Akyros briefly flashes a portrait when he
-  // dodges an attack, Shadow Execution lands, OR Hidden Mark is cast, and
-  // Chronox briefly flashes a portrait when Time Freeze OR Cyclone Punch
-  // triggers - all timed overrides on top of everything else (see
-  // setLaughing/setAthenaHealing/setAthenaCurse/setTharoxGlory/
-  // setZerathysSoul/setAkyrosShadow/setAkyrosDodge/setBoingoHardpunch/
-  // setBoingoMiss/setChronoxTime/setChronoxCyclone/setAkyrosHidden/
-  // setZerathysCharge/setTharoxToss in dashboardScreen.js). Laughing takes
+  // dodges an attack, Shadow Execution lands, OR Hidden Mark is cast, Chronox
+  // briefly flashes a portrait when Time Freeze OR Cyclone Punch triggers,
+  // and Velorya briefly flashes a portrait when Lunar Strike lands - all
+  // timed overrides on top of everything else (see setLaughing/
+  // setAthenaHealing/setAthenaCurse/setTharoxGlory/setZerathysSoul/
+  // setAkyrosShadow/setAkyrosDodge/setBoingoHardpunch/setBoingoMiss/
+  // setChronoxTime/setChronoxCyclone/setAkyrosHidden/setZerathysCharge/
+  // setTharoxToss/setVeloryaStrike in dashboardScreen.js). Laughing takes
   // priority over hard-punch/miss; for Athena, Divine Restore (her rarer
   // self-heal special) beats Curse Strike (her routine every-turn action);
   // for Akyros, dodge (a reactive moment) beats Shadow Execution (an
@@ -126,10 +127,13 @@ export function renderCharacterCard(character, {
   // move); for Tharox, Glory Smash (his special) beats Titan Toss (his
   // routine setup move); Time Freeze (Chronox's rarer special) beats Cyclone
   // Punch (his every-turn normal attack) - in the unlikely case multiple
-  // flags flash at once. Velorya shows a "hidden" portrait for as long as
-  // Lunar Eclipse's untargetable status lasts (persistent state, not a
-  // timed flash) - takes priority over her injured look since she's cloaked
-  // regardless of how hurt she is underneath.
+  // flags flash at once. Velorya's persistent "hidden" portrait (shown for
+  // as long as Lunar Eclipse's untargetable status lasts) takes priority
+  // over her Lunar Strike flash, since she can't have attacked from behind
+  // the eclipse (Lunar Strike/Moonstep are her only attacks, and eclipse
+  // only ends after 3 of them, so a stale flash could otherwise linger into
+  // an eclipsed render) - and both take priority over her injured look
+  // since she's cloaked regardless of how hurt she is underneath.
   const isInjured = !character.isKO && character.hearts <= character.maxHearts / 2;
   if (character.id === 'boingo' && isLaughing && !character.isKO) {
     portrait.src = 'assets/images/boingo_laughing.jpg';
@@ -161,6 +165,8 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/chronox_cyclone.jpg';
   } else if (character.id === 'velorya' && character.untargetable && !character.isKO) {
     portrait.src = 'assets/images/velorya_hided.jpg';
+  } else if (character.id === 'velorya' && isVeloryaStrike && !character.isKO) {
+    portrait.src = 'assets/images/velorya_strike.jpg';
   } else if (character.id === 'blade' && character.special.rebirthUsed) {
     portrait.src = 'assets/images/blade_alive.jpg';
   } else {

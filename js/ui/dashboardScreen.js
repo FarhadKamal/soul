@@ -113,6 +113,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // explicit-timer pattern as the flags above.
   let athenaCurseCharacterIds = new Set();
   let athenaCurseClearTimer = null;
+  // Character ids to briefly show Velorya's Lunar Strike portrait on - same
+  // explicit-timer pattern as the flags above.
+  let veloryaStrikeCharacterIds = new Set();
+  let veloryaStrikeClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -559,6 +563,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isZerathysCharge: zerathysChargeCharacterIds.has(character.id),
           isTharoxToss: tharoxTossCharacterIds.has(character.id),
           isAthenaCurse: athenaCurseCharacterIds.has(character.id),
+          isVeloryaStrike: veloryaStrikeCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -880,6 +885,9 @@ export function renderDashboard(container, game, { onRestart }) {
     if (actionId === 'curseStrike' && !game.characters[characterId].isKO) {
       setAthenaCurse(characterId);
     }
+    if (actionId === 'lunarStrike' && !result?.dodged && !game.characters[characterId].isKO) {
+      setVeloryaStrike(characterId);
+    }
     if ((actionId === 'titanSmash' || actionId === 'glorySmash') && targetId && !result?.dodged && result?.amountDealt > 0) {
       shakeCharacterIds.add(targetId);
     }
@@ -1139,6 +1147,18 @@ export function renderDashboard(container, game, { onRestart }) {
     athenaCurseClearTimer = setTimeout(() => {
       athenaCurseClearTimer = null;
       athenaCurseCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Velorya's Lunar Strike portrait for a fixed duration - same
+  // reasoning as setLaughing above.
+  function setVeloryaStrike(characterId) {
+    veloryaStrikeCharacterIds.add(characterId);
+    if (veloryaStrikeClearTimer) clearTimeout(veloryaStrikeClearTimer);
+    veloryaStrikeClearTimer = setTimeout(() => {
+      veloryaStrikeClearTimer = null;
+      veloryaStrikeCharacterIds = new Set();
       render();
     }, 1600);
   }
