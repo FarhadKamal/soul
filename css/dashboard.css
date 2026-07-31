@@ -248,24 +248,6 @@
   100% { transform: rotate(360deg); }
 }
 
-.char-card.eclipsed .portrait {
-  filter: brightness(0.12) contrast(1.4) saturate(0);
-}
-.char-card.eclipsed .portrait-wrap::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: url('../assets/images/eclipse.jpg') center / cover no-repeat;
-  mix-blend-mode: screen;
-  opacity: 0.8;
-  animation: eclipse-glow 3.2s ease-in-out infinite;
-}
-@keyframes eclipse-glow {
-  0%, 100% { opacity: 0.65; }
-  50% { opacity: 0.85; }
-}
 
 .char-card.cursed-mark {
   position: relative;
