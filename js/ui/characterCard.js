@@ -112,7 +112,7 @@ export function renderCharacterCard(character, {
   if (character.id === 'boingo' && isLaughing && !character.isKO) {
     portrait.src = 'assets/images/boingo_laughing.jpg';
   } else if (character.id === 'athena' && isAthenaHealing && !character.isKO) {
-    portrait.src = 'assets/images/ahtena_heal.jpg';
+    portrait.src = 'assets/images/athena_heal.jpg';
   } else if (character.id === 'blade' && character.special.rebirthUsed) {
     portrait.src = 'assets/images/blade_alive.jpg';
   } else {
