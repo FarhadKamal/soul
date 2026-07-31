@@ -310,7 +310,23 @@ function chooseVeloryaMove(character, game, usable) {
     // prefer whichever valid target isn't lastTargetId to get the bonus.
     const differentTarget = targets.find((tid) => tid !== character.special.lastTargetId);
     const targetId = differentTarget || biggestThreatTarget(game, character, targets) || lowestHeartsTarget(game, targets);
-    if (targetId) return { actionId: 'moonstep', targetId };
+    if (targetId) {
+      // If the only target is a live cursing Athena, every point of damage
+      // she deals mirrors straight back onto her (both attacks ignore
+      // shield, so there's no absorption to soften it either). Once she's
+      // low enough that the bigger Moonstep hit (2, from switching targets)
+      // would be fatal via the mirror but the smaller flat Lunar Strike (1)
+      // would not, take the smaller guaranteed-safe hit instead of risking
+      // herself for the marginal extra damage.
+      if (targetId === 'athena' && isCursedByLiveAthena(game, character)) {
+        const isNewTarget = character.special.lastTargetId !== null && character.special.lastTargetId !== targetId;
+        const moonstepDamage = isNewTarget ? 2 : 1;
+        if (character.hearts <= moonstepDamage && character.hearts > 1) {
+          return { actionId: 'lunarStrike', targetId };
+        }
+      }
+      return { actionId: 'moonstep', targetId };
+    }
   }
   return { actionId: 'lunarStrike', targetId: pickDefaultTarget(game, character, 'lunarStrike') };
 }
