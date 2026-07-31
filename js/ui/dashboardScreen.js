@@ -101,6 +101,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // explicit-timer pattern as the flags above.
   let akyrosHiddenCharacterIds = new Set();
   let akyrosHiddenClearTimer = null;
+  // Character ids to briefly show Zerathys's Charge Up portrait on - same
+  // explicit-timer pattern as the flags above.
+  let zerathysChargeCharacterIds = new Set();
+  let zerathysChargeClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -544,6 +548,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isBoingoMiss: boingoMissCharacterIds.has(character.id),
           isChronoxCyclone: chronoxCycloneCharacterIds.has(character.id),
           isAkyrosHidden: akyrosHiddenCharacterIds.has(character.id),
+          isZerathysCharge: zerathysChargeCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -856,6 +861,9 @@ export function renderDashboard(container, game, { onRestart }) {
     if (actionId === 'hiddenMark' && !game.characters[characterId].isKO) {
       setAkyrosHidden(characterId);
     }
+    if (actionId === 'chargeUp' && !game.characters[characterId].isKO) {
+      setZerathysCharge(characterId);
+    }
     if ((actionId === 'titanSmash' || actionId === 'glorySmash') && targetId && !result?.dodged && result?.amountDealt > 0) {
       shakeCharacterIds.add(targetId);
     }
@@ -1079,6 +1087,18 @@ export function renderDashboard(container, game, { onRestart }) {
     akyrosHiddenClearTimer = setTimeout(() => {
       akyrosHiddenClearTimer = null;
       akyrosHiddenCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Zerathys's Charge Up portrait for a fixed duration - same
+  // reasoning as setLaughing above.
+  function setZerathysCharge(characterId) {
+    zerathysChargeCharacterIds.add(characterId);
+    if (zerathysChargeClearTimer) clearTimeout(zerathysChargeClearTimer);
+    zerathysChargeClearTimer = setTimeout(() => {
+      zerathysChargeClearTimer = null;
+      zerathysChargeCharacterIds = new Set();
       render();
     }, 1600);
   }
