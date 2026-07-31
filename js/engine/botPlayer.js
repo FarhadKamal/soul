@@ -390,6 +390,22 @@ function chooseAkyrosMove(character, game, usable) {
   // while Shadow Execution ignores it entirely - no point chipping away at
   // a shield with Fatal Slash when the guaranteed-through hit is available.
   if (byId.shadowExecution) {
+    // When more than one marked target would actually die to the 3-damage
+    // ignore-shield hit, prefer whichever is the bigger active threat over
+    // just whoever has the fewest hearts - a kill's a kill either way, so
+    // take out whoever's more dangerous first rather than defaulting to the
+    // easiest one. Confirmed via a real match: killing an already-doomed
+    // 1-heart target instead of a 3-heart target that was actively about to
+    // land the finishing blow cost the match - the real threat survived and
+    // got the next hit in first.
+    const killableMarked = markedTargets.filter((tid) => {
+      const t = game.characters[tid];
+      return t.hearts <= Math.max(0, 3 - t.shield);
+    });
+    if (killableMarked.length > 0) {
+      const target = biggestThreatTarget(game, character, killableMarked) || lowestHeartsTarget(game, killableMarked);
+      return { actionId: 'shadowExecution', targetId: target };
+    }
     const weakest = lowestHeartsTarget(game, markedTargets);
     const shieldedTarget = markedTargets.find((tid) => game.characters[tid].shield > 0);
     if (weakest && game.characters[weakest].hearts <= 3) {
