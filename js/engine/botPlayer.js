@@ -286,6 +286,30 @@ function chooseZerathysMove(character, game, usable) {
   return { actionId: 'thunderWrath', targetId: pickDefaultTarget(game, character, 'thunderWrath') };
 }
 
+// Target for the free Thunder Wrath that fires immediately after Soul Swap
+// (chargeCount is always 0 at that point, dealing 1 damage). Reuses the same
+// kill-securing/shield-aware/double-dip/self-curse-safety logic as a normal
+// Thunder Wrath choice, rather than a plain random pick - confirmed via a
+// real match where a fully random follow-up wasted the free hit on a
+// shielded target (0 damage through the shield) instead of an unshielded
+// one that would have landed real damage.
+export function chooseSoulSwapWrathTarget(character, game) {
+  const targets = validTargetsFor(game, character, 'soulSwapWrath');
+  if (targets.length === 0) return null;
+  const securesKill = targets.find((tid) => {
+    const t = game.characters[tid];
+    return t.hearts <= Math.max(0, 1 - t.shield);
+  });
+  if (securesKill) return securesKill;
+  // Prefer an unshielded target so the hit actually lands instead of being
+  // fully absorbed for zero effect.
+  const unshielded = targets.filter((tid) => game.characters[tid].shield <= 0);
+  const pool = unshielded.length > 0 ? unshielded : targets;
+  const doubleDip = athenaDoubleDipTarget(game, character, pool);
+  if (doubleDip) return doubleDip;
+  return focusFireTarget(game, pool) || biggestThreatTarget(game, character, pool) || lowestHeartsTarget(game, pool);
+}
+
 function chooseChronoxMove(character, game, usable) {
   const byId = Object.fromEntries(usable.map((a) => [a.actionId, a]));
   // Time Freeze is best spent either defensively (Chronox himself is low

@@ -10,7 +10,7 @@ import { showModal } from './modal.js';
 import { renderRulesModal } from './rulesScreen.js';
 import { toggleFullscreen } from './fullscreen.js';
 import { rollChaosGamble } from '../engine/random.js';
-import { chooseBotMove, chooseBotJesterBallMove } from '../engine/botPlayer.js';
+import { chooseBotMove, chooseBotJesterBallMove, chooseSoulSwapWrathTarget } from '../engine/botPlayer.js';
 import { playActionSound, playUiClick, playKO, playVictory, playCoin, playSound, startTickLoop, stopTickLoop, startMenuMusic } from '../engine/sound.js';
 import { getConsoleLogText } from '../engine/consoleCapture.js';
 
@@ -726,10 +726,15 @@ export function renderDashboard(container, game, { onRestart }) {
       playActionSound('soulSwap');
 
       if (isAuto) {
-        // The whole move was auto-picked (turn timer expired) - the free
-        // follow-up must also resolve automatically, otherwise it would sit
-        // armed waiting for a target click that may never come.
-        const freeTargetId = pickRandomTarget(characterId, 'soulSwapWrath');
+        // The whole move was auto-picked (turn timer expired, or a PC bot's
+        // turn) - the free follow-up must also resolve automatically,
+        // otherwise it would sit armed waiting for a target click that may
+        // never come. Use the same kill-securing/shield-aware target logic
+        // as a normal Thunder Wrath choice rather than a plain random pick -
+        // a fully random pick could waste the free hit on a shielded target
+        // for zero effect when an unshielded one was available.
+        const freeTargetId = chooseSoulSwapWrathTarget(game.characters[characterId], game)
+          ?? pickRandomTarget(characterId, 'soulSwapWrath');
         if (freeTargetId) {
           const logBefore2 = game.log.length;
           const wrathResult = executeAction(game, characterId, 'soulSwapWrath', freeTargetId);
