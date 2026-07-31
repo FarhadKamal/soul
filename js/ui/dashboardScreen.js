@@ -58,6 +58,12 @@ export function renderDashboard(container, game, { onRestart }) {
   // fixed duration regardless of what else re-renders in between.
   let laughingCharacterIds = new Set();
   let laughingClearTimer = null;
+  // Character ids to briefly show Athena's healing portrait on (Divine
+  // Restore only, not Tharox's Glory Smash) - same explicit-timer pattern as
+  // laughingCharacterIds above, for the same reason (a plain <img> src swap
+  // needs its own fixed-duration hold, not "until next render").
+  let athenaHealingCharacterIds = new Set();
+  let athenaHealingClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -491,6 +497,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isDodging: dodgeCharacterIds.has(character.id),
           isSmoking: smokeCharacterIds.has(character.id),
           isLaughing: laughingCharacterIds.has(character.id),
+          isAthenaHealing: athenaHealingCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -787,6 +794,7 @@ export function renderDashboard(container, game, { onRestart }) {
     // got knocked out and gained nothing would be misleading.
     if ((actionId === 'divineRestore' || actionId === 'glorySmash') && !game.characters[characterId].isKO) {
       divineLightCharacterIds.add(characterId);
+      if (actionId === 'divineRestore') setAthenaHealing(characterId);
     }
     if ((actionId === 'titanSmash' || actionId === 'glorySmash') && targetId && !result?.dodged && result?.amountDealt > 0) {
       shakeCharacterIds.add(targetId);
@@ -890,6 +898,18 @@ export function renderDashboard(container, game, { onRestart }) {
     laughingClearTimer = setTimeout(() => {
       laughingClearTimer = null;
       laughingCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Athena's healing portrait for a fixed duration - same reasoning
+  // as setLaughing above.
+  function setAthenaHealing(characterId) {
+    athenaHealingCharacterIds.add(characterId);
+    if (athenaHealingClearTimer) clearTimeout(athenaHealingClearTimer);
+    athenaHealingClearTimer = setTimeout(() => {
+      athenaHealingClearTimer = null;
+      athenaHealingCharacterIds = new Set();
       render();
     }, 1600);
   }

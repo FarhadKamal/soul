@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -104,11 +104,15 @@ export function renderCharacterCard(character, {
   // once his Rebirth has actually triggered, taking priority over the
   // ordinary injured look (Rebirth always leaves him well below half health).
   // Boingo briefly flashes a laughing portrait when the Jester Ball pays off
-  // for him (explodes on someone else, or comes back to heal him) - a
-  // one-shot override on top of everything else, consumed after one render.
+  // for him (explodes on someone else, or comes back to heal him), and
+  // Athena briefly flashes a healing portrait when Divine Restore triggers -
+  // both timed overrides on top of everything else (see setLaughing/
+  // setAthenaHealing in dashboardScreen.js).
   const isInjured = !character.isKO && character.hearts <= character.maxHearts / 2;
   if (character.id === 'boingo' && isLaughing && !character.isKO) {
     portrait.src = 'assets/images/boingo_laughing.jpg';
+  } else if (character.id === 'athena' && isAthenaHealing && !character.isKO) {
+    portrait.src = 'assets/images/ahtena_heal.jpg';
   } else if (character.id === 'blade' && character.special.rebirthUsed) {
     portrait.src = 'assets/images/blade_alive.jpg';
   } else {
