@@ -89,6 +89,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // above.
   let boingoHardpunchCharacterIds = new Set();
   let boingoHardpunchClearTimer = null;
+  // Character ids to briefly show Boingo's miss portrait on (a Chaos Gamble
+  // "lose" roll) - same explicit-timer pattern as the flags above.
+  let boingoMissCharacterIds = new Set();
+  let boingoMissClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -529,6 +533,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isChronoxTime: chronoxTimeCharacterIds.has(character.id),
           isAkyrosDodge: akyrosDodgeCharacterIds.has(character.id),
           isBoingoHardpunch: boingoHardpunchCharacterIds.has(character.id),
+          isBoingoMiss: boingoMissCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -772,6 +777,7 @@ export function renderDashboard(container, game, { onRestart }) {
         playPostActionSounds(actionId, targetId, logBefore);
       } else {
         playSound('miss');
+        if (!game.characters[characterId].isKO) setBoingoMiss(characterId);
       }
       return finishAction(characterId);
     }
@@ -1021,6 +1027,18 @@ export function renderDashboard(container, game, { onRestart }) {
     boingoHardpunchClearTimer = setTimeout(() => {
       boingoHardpunchClearTimer = null;
       boingoHardpunchCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Boingo's miss portrait for a fixed duration - same reasoning as
+  // setLaughing above.
+  function setBoingoMiss(characterId) {
+    boingoMissCharacterIds.add(characterId);
+    if (boingoMissClearTimer) clearTimeout(boingoMissClearTimer);
+    boingoMissClearTimer = setTimeout(() => {
+      boingoMissClearTimer = null;
+      boingoMissCharacterIds = new Set();
       render();
     }, 1600);
   }
