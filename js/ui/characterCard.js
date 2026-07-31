@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -103,8 +103,13 @@ export function renderCharacterCard(character, {
   // gets a special "back from the dead" portrait for the rest of the match
   // once his Rebirth has actually triggered, taking priority over the
   // ordinary injured look (Rebirth always leaves him well below half health).
+  // Boingo briefly flashes a laughing portrait when the Jester Ball pays off
+  // for him (explodes on someone else, or comes back to heal him) - a
+  // one-shot override on top of everything else, consumed after one render.
   const isInjured = !character.isKO && character.hearts <= character.maxHearts / 2;
-  if (character.id === 'blade' && character.special.rebirthUsed) {
+  if (character.id === 'boingo' && isLaughing && !character.isKO) {
+    portrait.src = 'assets/images/boingo_laughing.jpg';
+  } else if (character.id === 'blade' && character.special.rebirthUsed) {
     portrait.src = 'assets/images/blade_alive.jpg';
   } else {
     portrait.src = isInjured || character.isKO

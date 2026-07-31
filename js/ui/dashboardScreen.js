@@ -47,6 +47,11 @@ export function renderDashboard(container, game, { onRestart }) {
   // Character ids to show a one-time smoke/scorch burst on (Jester Ball
   // exploding on whoever "Takes" it) - same consume-once-per-render pattern.
   let smokeCharacterIds = new Set();
+  // Character ids to briefly show Boingo's laughing portrait on - the ball
+  // either exploded on someone else (his mischief paid off) or came back to
+  // heal him. Always just Boingo himself; same consume-once-per-render
+  // pattern as the other one-shot visual flags.
+  let laughingCharacterIds = new Set();
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -202,6 +207,7 @@ export function renderDashboard(container, game, { onRestart }) {
     clawCounts = new Map(); // consumed for this render only
     dodgeCharacterIds = new Set(); // consumed for this render only
     smokeCharacterIds = new Set(); // consumed for this render only
+    laughingCharacterIds = new Set(); // consumed for this render only
     wrap.appendChild(renderActionPanel(activeCharId));
     const logPanelEl = renderLogPanel(game);
     wrap.appendChild(logPanelEl);
@@ -476,6 +482,7 @@ export function renderDashboard(container, game, { onRestart }) {
           clawCount: clawCounts.get(character.id),
           isDodging: dodgeCharacterIds.has(character.id),
           isSmoking: smokeCharacterIds.has(character.id),
+          isLaughing: laughingCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -892,14 +899,21 @@ export function renderDashboard(container, game, { onRestart }) {
         shakeCharacterIds.add(holderId);
         const holder = game.characters[holderId];
         if (holder?.isKO && game.phase !== 'game-over') setTimeout(() => playKO(), 200);
+        // The ball only ever explodes on someone ELSE - Boingo himself is
+        // never the holder who Takes it - so his mischief paid off either
+        // way: flash his laughing portrait.
+        if (thrownByCharacterId && !game.characters[thrownByCharacterId].isKO) {
+          laughingCharacterIds.add(thrownByCharacterId);
+        }
       }
     }
     else {
       playSound('magic');
       // Return to Boingo heals him +4 - same golden self-buff glow used for
-      // Divine Restore/Glory Smash.
+      // Divine Restore/Glory Smash, plus his laughing portrait.
       if (thrownByCharacterId && !game.characters[thrownByCharacterId].isKO) {
         divineLightCharacterIds.add(thrownByCharacterId);
+        laughingCharacterIds.add(thrownByCharacterId);
       }
     }
     // Return/Pass consume the holder's turn action. Take does NOT - the
