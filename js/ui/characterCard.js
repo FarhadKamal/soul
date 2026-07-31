@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isVeloryaStrike, isBladeStrike, isZerathysStrike, isTharoxSmash, isAkyrosFatal, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isVeloryaStrike, isBladeStrike, isZerathysStrike, isTharoxSmash, isAkyrosFatal, isBoingoThrowing, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -105,8 +105,9 @@ export function renderCharacterCard(character, {
   // ordinary injured look (Rebirth always leaves him well below half health).
   // Boingo briefly flashes a laughing portrait when the Jester Ball pays off
   // for him (explodes on someone else, or comes back to heal him), a
-  // hard-punch portrait when a Chaos Gamble "win" roll lands, or a miss
-  // portrait when a Chaos Gamble "lose" roll whiffs, Athena briefly flashes
+  // throwing portrait when he casts Jester Ball, a hard-punch portrait when
+  // a Chaos Gamble "win" roll lands, or a miss portrait when a Chaos Gamble
+  // "lose" roll whiffs, Athena briefly flashes
   // a healing portrait when Divine Restore triggers OR a curse portrait when
   // Curse Strike is cast, Tharox briefly flashes a portrait when Glory Smash
   // triggers, plain Smash OR Titan Smash lands (NOT Glory Smash, which has
@@ -119,13 +120,14 @@ export function renderCharacterCard(character, {
   // triggers, Velorya briefly flashes a portrait when Lunar Strike OR
   // Moonstep lands, and Blade briefly flashes a portrait when Blood Hunt
   // lands - all timed overrides on top of everything else (see setLaughing/
-  // setAthenaHealing/setAthenaCurse/setTharoxGlory/setTharoxSmash/
-  // setZerathysSoul/setZerathysStrike/setAkyrosShadow/setAkyrosDodge/
-  // setAkyrosFatal/setBoingoHardpunch/setBoingoMiss/setChronoxTime/
-  // setChronoxCyclone/setAkyrosHidden/setZerathysCharge/setTharoxToss/
-  // setVeloryaStrike/setBladeStrike in dashboardScreen.js). Laughing takes
-  // priority over hard-punch/miss; for Athena, Divine Restore (her rarer
-  // self-heal special) beats Curse Strike (her routine every-turn action);
+  // setBoingoThrowing/setAthenaHealing/setAthenaCurse/setTharoxGlory/
+  // setTharoxSmash/setZerathysSoul/setZerathysStrike/setAkyrosShadow/
+  // setAkyrosDodge/setAkyrosFatal/setBoingoHardpunch/setBoingoMiss/
+  // setChronoxTime/setChronoxCyclone/setAkyrosHidden/setZerathysCharge/
+  // setTharoxToss/setVeloryaStrike/setBladeStrike in dashboardScreen.js).
+  // Laughing takes priority over throwing/hard-punch/miss; for Athena,
+  // Divine Restore (her rarer self-heal special) beats Curse Strike (her
+  // routine every-turn action);
   // for Akyros, dodge (a reactive moment) beats Shadow Execution (an
   // eventful special) beats Hidden Mark (his routine setup move) beats Fatal
   // Slash (his everyday attack); for Zerathys, Thunder Wrath (the actual
@@ -146,6 +148,8 @@ export function renderCharacterCard(character, {
   const isInjured = !character.isKO && character.hearts <= character.maxHearts / 2;
   if (character.id === 'boingo' && isLaughing && !character.isKO) {
     portrait.src = 'assets/images/boingo_laughing.jpg';
+  } else if (character.id === 'boingo' && isBoingoThrowing && !character.isKO) {
+    portrait.src = 'assets/images/boingo_throwing.jpg';
   } else if (character.id === 'boingo' && isBoingoHardpunch && !character.isKO) {
     portrait.src = 'assets/images/boingo_hardpunch.jpg';
   } else if (character.id === 'boingo' && isBoingoMiss && !character.isKO) {

@@ -136,6 +136,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // explicit-timer pattern as the flags above.
   let akyrosFatalCharacterIds = new Set();
   let akyrosFatalClearTimer = null;
+  // Character ids to briefly show Boingo's throwing portrait on (casting
+  // Jester Ball) - same explicit-timer pattern as the flags above.
+  let boingoThrowingCharacterIds = new Set();
+  let boingoThrowingClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -587,6 +591,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isZerathysStrike: zerathysStrikeCharacterIds.has(character.id),
           isTharoxSmash: tharoxSmashCharacterIds.has(character.id),
           isAkyrosFatal: akyrosFatalCharacterIds.has(character.id),
+          isBoingoThrowing: boingoThrowingCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -897,6 +902,9 @@ export function renderDashboard(container, game, { onRestart }) {
     }
     if (actionId === 'timeFreeze' && !game.characters[characterId].isKO) {
       setChronoxTime(characterId);
+    }
+    if (actionId === 'jesterBall' && !game.characters[characterId].isKO) {
+      setBoingoThrowing(characterId);
     }
     if (actionId === 'hiddenMark' && !game.characters[characterId].isKO) {
       setAkyrosHidden(characterId);
@@ -1242,6 +1250,18 @@ export function renderDashboard(container, game, { onRestart }) {
     akyrosFatalClearTimer = setTimeout(() => {
       akyrosFatalClearTimer = null;
       akyrosFatalCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Boingo's throwing portrait (casting Jester Ball) for a fixed
+  // duration - same reasoning as setLaughing above.
+  function setBoingoThrowing(characterId) {
+    boingoThrowingCharacterIds.add(characterId);
+    if (boingoThrowingClearTimer) clearTimeout(boingoThrowingClearTimer);
+    boingoThrowingClearTimer = setTimeout(() => {
+      boingoThrowingClearTimer = null;
+      boingoThrowingCharacterIds = new Set();
       render();
     }, 1600);
   }
