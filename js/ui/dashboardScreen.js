@@ -132,6 +132,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // tharox_glory portrait) - same explicit-timer pattern as the flags above.
   let tharoxSmashCharacterIds = new Set();
   let tharoxSmashClearTimer = null;
+  // Character ids to briefly show Akyros's Fatal Slash portrait on - same
+  // explicit-timer pattern as the flags above.
+  let akyrosFatalCharacterIds = new Set();
+  let akyrosFatalClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -582,6 +586,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isBladeStrike: bladeStrikeCharacterIds.has(character.id),
           isZerathysStrike: zerathysStrikeCharacterIds.has(character.id),
           isTharoxSmash: tharoxSmashCharacterIds.has(character.id),
+          isAkyrosFatal: akyrosFatalCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -914,6 +919,9 @@ export function renderDashboard(container, game, { onRestart }) {
     if ((actionId === 'titanSmash' || actionId === 'smash') && !result?.dodged && result?.amountDealt > 0 && !game.characters[characterId].isKO) {
       setTharoxSmash(characterId);
     }
+    if (actionId === 'fatalSlash' && !result?.dodged && result?.amountDealt > 0 && !game.characters[characterId].isKO) {
+      setAkyrosFatal(characterId);
+    }
     if ((actionId === 'titanSmash' || actionId === 'glorySmash') && targetId && !result?.dodged && result?.amountDealt > 0) {
       shakeCharacterIds.add(targetId);
     }
@@ -1222,6 +1230,18 @@ export function renderDashboard(container, game, { onRestart }) {
     tharoxSmashClearTimer = setTimeout(() => {
       tharoxSmashClearTimer = null;
       tharoxSmashCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Akyros's Fatal Slash portrait for a fixed duration - same
+  // reasoning as setLaughing above.
+  function setAkyrosFatal(characterId) {
+    akyrosFatalCharacterIds.add(characterId);
+    if (akyrosFatalClearTimer) clearTimeout(akyrosFatalClearTimer);
+    akyrosFatalClearTimer = setTimeout(() => {
+      akyrosFatalClearTimer = null;
+      akyrosFatalCharacterIds = new Set();
       render();
     }, 1600);
   }

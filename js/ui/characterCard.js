@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isVeloryaStrike, isBladeStrike, isZerathysStrike, isTharoxSmash, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isVeloryaStrike, isBladeStrike, isZerathysStrike, isTharoxSmash, isAkyrosFatal, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -114,25 +114,26 @@ export function renderCharacterCard(character, {
   // portrait when Thunder Wrath lands (covers both the normal action and the
   // free Soul Swap follow-up), Soul Swap itself triggers, OR Charge Up
   // triggers, Akyros briefly flashes a portrait when he dodges an attack,
-  // Shadow Execution lands, OR Hidden Mark is cast, Chronox briefly flashes
-  // a portrait when Time Freeze OR Cyclone Punch triggers, Velorya briefly
-  // flashes a portrait when Lunar Strike OR Moonstep lands, and Blade
-  // briefly flashes a portrait when Blood Hunt lands - all timed overrides
-  // on top of everything else (see setLaughing/setAthenaHealing/
-  // setAthenaCurse/setTharoxGlory/setTharoxSmash/setZerathysSoul/
-  // setZerathysStrike/setAkyrosShadow/setAkyrosDodge/setBoingoHardpunch/
-  // setBoingoMiss/setChronoxTime/setChronoxCyclone/setAkyrosHidden/
-  // setZerathysCharge/setTharoxToss/setVeloryaStrike/setBladeStrike in
-  // dashboardScreen.js). Laughing takes priority over hard-punch/miss; for
-  // Athena, Divine Restore (her rarer self-heal special) beats Curse Strike
-  // (her routine every-turn action); for Akyros, dodge (a reactive moment)
-  // beats Shadow Execution (an eventful special) beats Hidden Mark (his
-  // routine setup move); for Zerathys, Thunder Wrath (the actual hit) beats
-  // Soul Swap (the setup special) beats Charge Up (his routine setup move);
-  // for Tharox, Glory Smash (his special) beats Smash/Titan Smash (the
-  // actual hit) beats Titan Toss (his routine setup move); Time Freeze
-  // (Chronox's rarer special) beats Cyclone Punch (his every-turn normal
-  // attack) - in the unlikely case multiple flags flash at once.
+  // Shadow Execution lands, Hidden Mark is cast, OR Fatal Slash lands,
+  // Chronox briefly flashes a portrait when Time Freeze OR Cyclone Punch
+  // triggers, Velorya briefly flashes a portrait when Lunar Strike OR
+  // Moonstep lands, and Blade briefly flashes a portrait when Blood Hunt
+  // lands - all timed overrides on top of everything else (see setLaughing/
+  // setAthenaHealing/setAthenaCurse/setTharoxGlory/setTharoxSmash/
+  // setZerathysSoul/setZerathysStrike/setAkyrosShadow/setAkyrosDodge/
+  // setAkyrosFatal/setBoingoHardpunch/setBoingoMiss/setChronoxTime/
+  // setChronoxCyclone/setAkyrosHidden/setZerathysCharge/setTharoxToss/
+  // setVeloryaStrike/setBladeStrike in dashboardScreen.js). Laughing takes
+  // priority over hard-punch/miss; for Athena, Divine Restore (her rarer
+  // self-heal special) beats Curse Strike (her routine every-turn action);
+  // for Akyros, dodge (a reactive moment) beats Shadow Execution (an
+  // eventful special) beats Hidden Mark (his routine setup move) beats Fatal
+  // Slash (his everyday attack); for Zerathys, Thunder Wrath (the actual
+  // hit) beats Soul Swap (the setup special) beats Charge Up (his routine
+  // setup move); for Tharox, Glory Smash (his special) beats Smash/Titan
+  // Smash (the actual hit) beats Titan Toss (his routine setup move); Time
+  // Freeze (Chronox's rarer special) beats Cyclone Punch (his every-turn
+  // normal attack) - in the unlikely case multiple flags flash at once.
   // Velorya's Lunar Strike/Moonstep flash takes priority over her persistent
   // "hidden" eclipse portrait - she still attacks while eclipsed (it's her
   // only offense), so the strike flash should briefly show even mid-eclipse,
@@ -171,6 +172,8 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/akyros_shadow.jpg';
   } else if (character.id === 'akyros' && isAkyrosHidden && !character.isKO) {
     portrait.src = 'assets/images/akyros_hidden.jpg';
+  } else if (character.id === 'akyros' && isAkyrosFatal && !character.isKO) {
+    portrait.src = 'assets/images/akyros_fatal.jpg';
   } else if (character.id === 'chronox' && isChronoxTime && !character.isKO) {
     portrait.src = 'assets/images/chronox_time.jpg';
   } else if (character.id === 'chronox' && isChronoxCyclone && !character.isKO) {
