@@ -122,6 +122,11 @@ export function renderDashboard(container, game, { onRestart }) {
   // explicit-timer pattern as the flags above.
   let bladeStrikeCharacterIds = new Set();
   let bladeStrikeClearTimer = null;
+  // Character ids to briefly show Zerathys's Thunder Wrath portrait on -
+  // covers both the normal action and the free Soul Swap follow-up - same
+  // explicit-timer pattern as the flags above.
+  let zerathysStrikeCharacterIds = new Set();
+  let zerathysStrikeClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -570,6 +575,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isAthenaCurse: athenaCurseCharacterIds.has(character.id),
           isVeloryaStrike: veloryaStrikeCharacterIds.has(character.id),
           isBladeStrike: bladeStrikeCharacterIds.has(character.id),
+          isZerathysStrike: zerathysStrikeCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -840,6 +846,7 @@ export function renderDashboard(container, game, { onRestart }) {
           const logBefore2 = game.log.length;
           const wrathResult = executeAction(game, characterId, 'soulSwapWrath', freeTargetId);
           markHitFromResult(wrathResult);
+          if (!wrathResult?.dodged && !game.characters[characterId].isKO) setZerathysStrike(characterId);
           playPostActionSounds('soulSwapWrath', freeTargetId, logBefore2);
         }
         finishAction(characterId);
@@ -854,6 +861,7 @@ export function renderDashboard(container, game, { onRestart }) {
         const logBefore2 = game.log.length;
         const wrathResult2 = executeAction(game, characterId, 'soulSwapWrath', freeTargetId);
         markHitFromResult(wrathResult2);
+        if (!wrathResult2?.dodged && !game.characters[characterId].isKO) setZerathysStrike(characterId);
         playPostActionSounds('soulSwapWrath', freeTargetId, logBefore2);
         finishAction(characterId);
       });
@@ -893,6 +901,9 @@ export function renderDashboard(container, game, { onRestart }) {
     }
     if ((actionId === 'lunarStrike' || actionId === 'moonstep') && !result?.dodged && !game.characters[characterId].isKO) {
       setVeloryaStrike(characterId);
+    }
+    if (actionId === 'thunderWrath' && !result?.dodged && !game.characters[characterId].isKO) {
+      setZerathysStrike(characterId);
     }
     if ((actionId === 'titanSmash' || actionId === 'glorySmash') && targetId && !result?.dodged && result?.amountDealt > 0) {
       shakeCharacterIds.add(targetId);
@@ -1178,6 +1189,18 @@ export function renderDashboard(container, game, { onRestart }) {
     bladeStrikeClearTimer = setTimeout(() => {
       bladeStrikeClearTimer = null;
       bladeStrikeCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Zerathys's Thunder Wrath portrait for a fixed duration - same
+  // reasoning as setLaughing above.
+  function setZerathysStrike(characterId) {
+    zerathysStrikeCharacterIds.add(characterId);
+    if (zerathysStrikeClearTimer) clearTimeout(zerathysStrikeClearTimer);
+    zerathysStrikeClearTimer = setTimeout(() => {
+      zerathysStrikeClearTimer = null;
+      zerathysStrikeCharacterIds = new Set();
       render();
     }, 1600);
   }
