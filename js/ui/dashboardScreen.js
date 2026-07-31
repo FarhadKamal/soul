@@ -84,6 +84,11 @@ export function renderDashboard(container, game, { onRestart }) {
   // explicit-timer pattern as the flags above.
   let akyrosDodgeCharacterIds = new Set();
   let akyrosDodgeClearTimer = null;
+  // Character ids to briefly show Boingo's hard-punch portrait on (a Chaos
+  // Gamble "win" roll landing) - same explicit-timer pattern as the flags
+  // above.
+  let boingoHardpunchCharacterIds = new Set();
+  let boingoHardpunchClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -523,6 +528,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isAkyrosShadow: akyrosShadowCharacterIds.has(character.id),
           isChronoxTime: chronoxTimeCharacterIds.has(character.id),
           isAkyrosDodge: akyrosDodgeCharacterIds.has(character.id),
+          isBoingoHardpunch: boingoHardpunchCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -760,6 +766,7 @@ export function renderDashboard(container, game, { onRestart }) {
       markHitFromResult(rpsResult);
       if (outcome === 'win' && !rpsResult?.dodged) {
         shakeCharacterIds.add(targetId);
+        if (!game.characters[characterId].isKO) setBoingoHardpunch(characterId);
       }
       if (outcome !== 'lose') {
         playPostActionSounds(actionId, targetId, logBefore);
@@ -1002,6 +1009,18 @@ export function renderDashboard(container, game, { onRestart }) {
     akyrosDodgeClearTimer = setTimeout(() => {
       akyrosDodgeClearTimer = null;
       akyrosDodgeCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Boingo's hard-punch portrait for a fixed duration - same
+  // reasoning as setLaughing above.
+  function setBoingoHardpunch(characterId) {
+    boingoHardpunchCharacterIds.add(characterId);
+    if (boingoHardpunchClearTimer) clearTimeout(boingoHardpunchClearTimer);
+    boingoHardpunchClearTimer = setTimeout(() => {
+      boingoHardpunchClearTimer = null;
+      boingoHardpunchCharacterIds = new Set();
       render();
     }, 1600);
   }
