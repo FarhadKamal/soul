@@ -129,7 +129,13 @@ function athenaDoubleDipTarget(game, character, targets) {
   return 'athena';
 }
 
-function pickDefaultTarget(game, character, actionId) {
+// minDamage: when the caller knows the exact (or minimum) damage the chosen
+// action will deal and the hit isn't shield-ignoring, a target whose shield
+// would fully absorb it nets zero effect - avoid wasting the action on them
+// when an unarmored alternative exists. Optional: omitted by callers whose
+// damage varies too unpredictably to check safely (coin flips, moderator
+// outcomes), in which case shield isn't considered at all.
+function pickDefaultTarget(game, character, actionId, minDamage = null) {
   const targets = validTargetsFor(game, character, actionId);
   if (targets.length === 0) return null;
   // Avoid hitting Athena while self-cursed unless she's the only option or
@@ -139,7 +145,11 @@ function pickDefaultTarget(game, character, actionId) {
     if (t.id !== 'athena' || !isCursedByLiveAthena(game, character)) return true;
     return false;
   });
-  const pool = nonAthenaSafe.length > 0 ? nonAthenaSafe : targets;
+  let pool = nonAthenaSafe.length > 0 ? nonAthenaSafe : targets;
+  if (minDamage !== null) {
+    const unarmored = pool.filter((tid) => game.characters[tid].shield < minDamage);
+    if (unarmored.length > 0) pool = unarmored;
+  }
   // Hitting Athena while she's cursing someone else lands damage on both of
   // them for the price of one action - take that free value over any other
   // priority whenever it's available and safe.
@@ -162,10 +172,10 @@ function chooseTharoxMove(character, game, usable) {
   // Smash while charged - prefer Glory Smash (heal+shield bonus) whenever
   // it's available, otherwise Titan Smash.
   if (byId.glorySmash) {
-    return { actionId: 'glorySmash', targetId: pickDefaultTarget(game, character, 'glorySmash') };
+    return { actionId: 'glorySmash', targetId: pickDefaultTarget(game, character, 'glorySmash', 2) };
   }
   if (byId.titanSmash) {
-    return { actionId: 'titanSmash', targetId: pickDefaultTarget(game, character, 'titanSmash') };
+    return { actionId: 'titanSmash', targetId: pickDefaultTarget(game, character, 'titanSmash', 3) };
   }
   // Uncharged: Smash (flat -1, no shield ignore) secures an immediate kill
   // on anyone already at 1 heart with no shield - don't pass that up just
@@ -265,7 +275,7 @@ function chooseZerathysMove(character, game, usable) {
   }
   // At max charge, always cash in - no reason to hold at the cap.
   if (chargeCount >= 2) {
-    return { actionId: 'thunderWrath', targetId: pickDefaultTarget(game, character, 'thunderWrath') };
+    return { actionId: 'thunderWrath', targetId: pickDefaultTarget(game, character, 'thunderWrath', wrathDamage) };
   }
   // Low hearts: normally don't sit around charging, take the guaranteed hit
   // now - but only when there's an actual reason to rush (a live cursing
@@ -278,12 +288,12 @@ function chooseZerathysMove(character, game, usable) {
   // 2-heart Akyros alive for one more turn, which then landed the killing
   // blow - charging once first would have secured the kill instead.
   if (character.hearts <= LOW_HEARTS_THRESHOLD && isCursedByLiveAthena(game, character)) {
-    return { actionId: 'thunderWrath', targetId: pickDefaultTarget(game, character, 'thunderWrath') };
+    return { actionId: 'thunderWrath', targetId: pickDefaultTarget(game, character, 'thunderWrath', wrathDamage) };
   }
   if (byId.chargeUp) {
     return { actionId: 'chargeUp', targetId: null };
   }
-  return { actionId: 'thunderWrath', targetId: pickDefaultTarget(game, character, 'thunderWrath') };
+  return { actionId: 'thunderWrath', targetId: pickDefaultTarget(game, character, 'thunderWrath', wrathDamage) };
 }
 
 // Target for the free Thunder Wrath that fires immediately after Soul Swap
