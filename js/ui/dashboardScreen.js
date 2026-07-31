@@ -76,6 +76,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // same explicit-timer pattern as the flags above.
   let akyrosShadowCharacterIds = new Set();
   let akyrosShadowClearTimer = null;
+  // Character ids to briefly show Chronox's Time Freeze portrait on - same
+  // explicit-timer pattern as the flags above.
+  let chronoxTimeCharacterIds = new Set();
+  let chronoxTimeClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -513,6 +517,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isTharoxGlory: tharoxGloryCharacterIds.has(character.id),
           isZerathysSoul: zerathysSoulCharacterIds.has(character.id),
           isAkyrosShadow: akyrosShadowCharacterIds.has(character.id),
+          isChronoxTime: chronoxTimeCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -813,6 +818,9 @@ export function renderDashboard(container, game, { onRestart }) {
       if (actionId === 'divineRestore') setAthenaHealing(characterId);
       if (actionId === 'glorySmash') setTharoxGlory(characterId);
     }
+    if (actionId === 'timeFreeze' && !game.characters[characterId].isKO) {
+      setChronoxTime(characterId);
+    }
     if ((actionId === 'titanSmash' || actionId === 'glorySmash') && targetId && !result?.dodged && result?.amountDealt > 0) {
       shakeCharacterIds.add(targetId);
     }
@@ -964,6 +972,18 @@ export function renderDashboard(container, game, { onRestart }) {
     akyrosShadowClearTimer = setTimeout(() => {
       akyrosShadowClearTimer = null;
       akyrosShadowCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Chronox's Time Freeze portrait for a fixed duration - same
+  // reasoning as setLaughing above.
+  function setChronoxTime(characterId) {
+    chronoxTimeCharacterIds.add(characterId);
+    if (chronoxTimeClearTimer) clearTimeout(chronoxTimeClearTimer);
+    chronoxTimeClearTimer = setTimeout(() => {
+      chronoxTimeClearTimer = null;
+      chronoxTimeCharacterIds = new Set();
       render();
     }, 1600);
   }
