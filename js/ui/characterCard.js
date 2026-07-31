@@ -192,6 +192,11 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/blade_strike.jpg';
   } else if (character.id === 'blade' && character.special.rebirthUsed) {
     portrait.src = 'assets/images/blade_alive.jpg';
+  } else if (character.id === 'athena' && !character.isKO && character.hearts === character.maxHearts) {
+    // Untouched all match (nobody has landed a hit on her yet) and at full
+    // health - her default "unbothered" look, shown whenever no timed flash
+    // (heal/curse) is active. Reverts the instant she takes any damage.
+    portrait.src = 'assets/images/athena_kiss.jpg';
   } else {
     portrait.src = isInjured || character.isKO
       ? `assets/images/injured/${character.id}.jpg`
