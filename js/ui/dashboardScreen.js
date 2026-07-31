@@ -151,6 +151,16 @@ export function renderDashboard(container, game, { onRestart }) {
   // the flags above.
   let boingoNormalpunchCharacterIds = new Set();
   let boingoNormalpunchClearTimer = null;
+  // Character ids to briefly show Athena's kiss portrait on - flashed once
+  // at the start of her own turn if nobody landed a hit on her since her
+  // previous turn (tracked via athenaHeartsAtLastTurnStart below) - same
+  // explicit-timer pattern as the flags above.
+  let athenaKissCharacterIds = new Set();
+  let athenaKissClearTimer = null;
+  // Athena's hearts as of the start of her most recent turn - compared
+  // against her current hearts at the start of her NEXT turn to detect
+  // whether she went the whole round unattacked. null until her first turn.
+  let athenaHeartsAtLastTurnStart = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -605,6 +615,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isBoingoThrowing: boingoThrowingCharacterIds.has(character.id),
           isVeloryaCasting: veloryaCastingCharacterIds.has(character.id),
           isBoingoNormalpunch: boingoNormalpunchCharacterIds.has(character.id),
+          isAthenaKiss: athenaKissCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -1002,6 +1013,14 @@ export function renderDashboard(container, game, { onRestart }) {
       if (!game.turnStartFiredFor.has(character.id)) {
         game.turnStartFiredFor.add(character.id);
         beginCharacterTurn(character, game, game.log);
+        if (character.id === 'athena' && !character.isKO) {
+          // Flash the kiss portrait if she took no damage since her last
+          // turn (first turn of the match always counts as untouched).
+          if (athenaHeartsAtLastTurnStart === null || character.hearts >= athenaHeartsAtLastTurnStart) {
+            setAthenaKiss(character.id);
+          }
+          athenaHeartsAtLastTurnStart = character.hearts;
+        }
       }
       // A ball holder can always resolve the ball even with zero normal
       // actions available, so don't auto-skip them in that case.
@@ -1305,6 +1324,18 @@ export function renderDashboard(container, game, { onRestart }) {
     boingoNormalpunchClearTimer = setTimeout(() => {
       boingoNormalpunchClearTimer = null;
       boingoNormalpunchCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Athena's kiss portrait for a fixed duration - same reasoning as
+  // setLaughing above.
+  function setAthenaKiss(characterId) {
+    athenaKissCharacterIds.add(characterId);
+    if (athenaKissClearTimer) clearTimeout(athenaKissClearTimer);
+    athenaKissClearTimer = setTimeout(() => {
+      athenaKissClearTimer = null;
+      athenaKissCharacterIds = new Set();
       render();
     }, 1600);
   }

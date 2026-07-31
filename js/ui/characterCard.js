@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isVeloryaStrike, isBladeStrike, isZerathysStrike, isTharoxSmash, isAkyrosFatal, isBoingoThrowing, isVeloryaCasting, isBoingoNormalpunch, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isVeloryaStrike, isBladeStrike, isZerathysStrike, isTharoxSmash, isAkyrosFatal, isBoingoThrowing, isVeloryaCasting, isBoingoNormalpunch, isAthenaKiss, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -107,9 +107,13 @@ export function renderCharacterCard(character, {
   // for him (explodes on someone else, or comes back to heal him), a
   // throwing portrait when he casts Jester Ball, a hard-punch portrait when
   // a Chaos Gamble "win" roll lands, or a miss portrait when a Chaos Gamble
-  // "lose" roll whiffs, Athena briefly flashes
-  // a healing portrait when Divine Restore triggers OR a curse portrait when
-  // Curse Strike is cast, Tharox briefly flashes a portrait when Glory Smash
+  // "lose" roll whiffs, or a normal-punch portrait for a "draw" roll, Athena
+  // briefly flashes a healing portrait when Divine Restore triggers, a curse
+  // portrait when Curse Strike is cast, or a kiss portrait at the start of
+  // her own turn whenever nobody landed a hit on her since her previous turn
+  // (tracked via athenaHeartsAtLastTurnStart, compared turn-to-turn - not a
+  // live health check, so it reads as a deliberate reaction rather than a
+  // flickering status), Tharox briefly flashes a portrait when Glory Smash
   // triggers, plain Smash OR Titan Smash lands (NOT Glory Smash, which has
   // its own portrait), OR Titan Toss triggers, Zerathys briefly flashes a
   // portrait when Thunder Wrath lands (covers both the normal action and the
@@ -160,6 +164,8 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/athena_heal.jpg';
   } else if (character.id === 'athena' && isAthenaCurse && !character.isKO) {
     portrait.src = 'assets/images/athena_curse.jpg';
+  } else if (character.id === 'athena' && isAthenaKiss && !character.isKO) {
+    portrait.src = 'assets/images/athena_kiss.jpg';
   } else if (character.id === 'tharox' && isTharoxGlory && !character.isKO) {
     portrait.src = 'assets/images/tharox_glory.jpg';
   } else if (character.id === 'tharox' && isTharoxSmash && !character.isKO) {
@@ -194,11 +200,6 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/blade_strike.jpg';
   } else if (character.id === 'blade' && character.special.rebirthUsed) {
     portrait.src = 'assets/images/blade_alive.jpg';
-  } else if (character.id === 'athena' && !character.isKO && character.hearts === character.maxHearts) {
-    // Untouched all match (nobody has landed a hit on her yet) and at full
-    // health - her default "unbothered" look, shown whenever no timed flash
-    // (heal/curse) is active. Reverts the instant she takes any damage.
-    portrait.src = 'assets/images/athena_kiss.jpg';
   } else {
     portrait.src = isInjured || character.isKO
       ? `assets/images/injured/${character.id}.jpg`
