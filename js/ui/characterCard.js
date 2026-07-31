@@ -99,11 +99,18 @@ export function renderCharacterCard(character, {
   const portrait = document.createElement('img');
   portrait.className = 'portrait';
   // Switch to the injured portrait once hurt down to half health or below -
-  // KO'd characters keep the injured look too rather than reverting.
+  // KO'd characters keep the injured look too rather than reverting. Blade
+  // gets a special "back from the dead" portrait for the rest of the match
+  // once his Rebirth has actually triggered, taking priority over the
+  // ordinary injured look (Rebirth always leaves him well below half health).
   const isInjured = !character.isKO && character.hearts <= character.maxHearts / 2;
-  portrait.src = isInjured || character.isKO
-    ? `assets/images/injured/${character.id}.jpg`
-    : `assets/portraits/${character.id}.png`;
+  if (character.id === 'blade' && character.special.rebirthUsed) {
+    portrait.src = 'assets/images/blade_alive.jpg';
+  } else {
+    portrait.src = isInjured || character.isKO
+      ? `assets/images/injured/${character.id}.jpg`
+      : `assets/portraits/${character.id}.png`;
+  }
   portrait.alt = def.name;
   portraitWrap.appendChild(portrait);
   card.appendChild(portraitWrap);
