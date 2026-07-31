@@ -64,6 +64,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // needs its own fixed-duration hold, not "until next render").
   let athenaHealingCharacterIds = new Set();
   let athenaHealingClearTimer = null;
+  // Character ids to briefly show Tharox's Glory Smash portrait on - same
+  // explicit-timer pattern as the flags above.
+  let tharoxGloryCharacterIds = new Set();
+  let tharoxGloryClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -498,6 +502,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isSmoking: smokeCharacterIds.has(character.id),
           isLaughing: laughingCharacterIds.has(character.id),
           isAthenaHealing: athenaHealingCharacterIds.has(character.id),
+          isTharoxGlory: tharoxGloryCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -795,6 +800,7 @@ export function renderDashboard(container, game, { onRestart }) {
     if ((actionId === 'divineRestore' || actionId === 'glorySmash') && !game.characters[characterId].isKO) {
       divineLightCharacterIds.add(characterId);
       if (actionId === 'divineRestore') setAthenaHealing(characterId);
+      if (actionId === 'glorySmash') setTharoxGlory(characterId);
     }
     if ((actionId === 'titanSmash' || actionId === 'glorySmash') && targetId && !result?.dodged && result?.amountDealt > 0) {
       shakeCharacterIds.add(targetId);
@@ -910,6 +916,18 @@ export function renderDashboard(container, game, { onRestart }) {
     athenaHealingClearTimer = setTimeout(() => {
       athenaHealingClearTimer = null;
       athenaHealingCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Tharox's Glory Smash portrait for a fixed duration - same
+  // reasoning as setLaughing above.
+  function setTharoxGlory(characterId) {
+    tharoxGloryCharacterIds.add(characterId);
+    if (tharoxGloryClearTimer) clearTimeout(tharoxGloryClearTimer);
+    tharoxGloryClearTimer = setTimeout(() => {
+      tharoxGloryClearTimer = null;
+      tharoxGloryCharacterIds = new Set();
       render();
     }, 1600);
   }
