@@ -80,6 +80,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // explicit-timer pattern as the flags above.
   let chronoxTimeCharacterIds = new Set();
   let chronoxTimeClearTimer = null;
+  // Character ids to briefly show Akyros's dodge portrait on - same
+  // explicit-timer pattern as the flags above.
+  let akyrosDodgeCharacterIds = new Set();
+  let akyrosDodgeClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -518,6 +522,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isZerathysSoul: zerathysSoulCharacterIds.has(character.id),
           isAkyrosShadow: akyrosShadowCharacterIds.has(character.id),
           isChronoxTime: chronoxTimeCharacterIds.has(character.id),
+          isAkyrosDodge: akyrosDodgeCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -717,6 +722,7 @@ export function renderDashboard(container, game, { onRestart }) {
     if (wasDodged) {
       playSound('dodge');
       dodgeCharacterIds.add(targetId);
+      if (!game.characters[targetId].isKO) setAkyrosDodge(targetId);
       return;
     }
     playActionSound(actionId);
@@ -984,6 +990,18 @@ export function renderDashboard(container, game, { onRestart }) {
     chronoxTimeClearTimer = setTimeout(() => {
       chronoxTimeClearTimer = null;
       chronoxTimeCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Akyros's dodge portrait for a fixed duration - same reasoning as
+  // setLaughing above.
+  function setAkyrosDodge(characterId) {
+    akyrosDodgeCharacterIds.add(characterId);
+    if (akyrosDodgeClearTimer) clearTimeout(akyrosDodgeClearTimer);
+    akyrosDodgeClearTimer = setTimeout(() => {
+      akyrosDodgeClearTimer = null;
+      akyrosDodgeCharacterIds = new Set();
       render();
     }, 1600);
   }

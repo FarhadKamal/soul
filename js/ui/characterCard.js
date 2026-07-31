@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -108,14 +108,16 @@ export function renderCharacterCard(character, {
   // briefly flashes a healing portrait when Divine Restore triggers, Tharox
   // briefly flashes a portrait when Glory Smash triggers, Zerathys briefly
   // flashes a portrait when Soul Swap triggers, Akyros briefly flashes a
-  // portrait when Shadow Execution lands, and Chronox briefly flashes a
-  // portrait when Time Freeze triggers - all timed overrides on top of
-  // everything else (see setLaughing/setAthenaHealing/setTharoxGlory/
-  // setZerathysSoul/setAkyrosShadow/setChronoxTime in dashboardScreen.js).
-  // Velorya shows a "hidden" portrait for as long as Lunar Eclipse's
-  // untargetable status lasts (persistent state, not a timed flash) - takes
-  // priority over her injured look since she's cloaked regardless of how
-  // hurt she is underneath.
+  // portrait when Shadow Execution lands OR he dodges an attack, and Chronox
+  // briefly flashes a portrait when Time Freeze triggers - all timed
+  // overrides on top of everything else (see setLaughing/setAthenaHealing/
+  // setTharoxGlory/setZerathysSoul/setAkyrosShadow/setAkyrosDodge/
+  // setChronoxTime in dashboardScreen.js). Dodge takes priority over Shadow
+  // Execution in the unlikely case both are flashing at once, since it's the
+  // more immediate reactive moment. Velorya shows a "hidden" portrait for as
+  // long as Lunar Eclipse's untargetable status lasts (persistent state, not
+  // a timed flash) - takes priority over her injured look since she's
+  // cloaked regardless of how hurt she is underneath.
   const isInjured = !character.isKO && character.hearts <= character.maxHearts / 2;
   if (character.id === 'boingo' && isLaughing && !character.isKO) {
     portrait.src = 'assets/images/boingo_laughing.jpg';
@@ -125,6 +127,8 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/tharox_glory.jpg';
   } else if (character.id === 'zerathys' && isZerathysSoul && !character.isKO) {
     portrait.src = 'assets/images/zerathys_soul.jpg';
+  } else if (character.id === 'akyros' && isAkyrosDodge && !character.isKO) {
+    portrait.src = 'assets/images/akyros_dodge.jpg';
   } else if (character.id === 'akyros' && isAkyrosShadow && !character.isKO) {
     portrait.src = 'assets/images/akyros_shadow.jpg';
   } else if (character.id === 'chronox' && isChronoxTime && !character.isKO) {
