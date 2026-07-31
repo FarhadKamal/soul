@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isVeloryaStrike, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isVeloryaStrike, isBladeStrike, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -113,12 +113,13 @@ export function renderCharacterCard(character, {
   // Swap OR Charge Up triggers, Akyros briefly flashes a portrait when he
   // dodges an attack, Shadow Execution lands, OR Hidden Mark is cast, Chronox
   // briefly flashes a portrait when Time Freeze OR Cyclone Punch triggers,
-  // and Velorya briefly flashes a portrait when Lunar Strike OR Moonstep
-  // lands - all timed overrides on top of everything else (see setLaughing/
-  // setAthenaHealing/setAthenaCurse/setTharoxGlory/setZerathysSoul/
-  // setAkyrosShadow/setAkyrosDodge/setBoingoHardpunch/setBoingoMiss/
-  // setChronoxTime/setChronoxCyclone/setAkyrosHidden/setZerathysCharge/
-  // setTharoxToss/setVeloryaStrike in dashboardScreen.js). Laughing takes
+  // Velorya briefly flashes a portrait when Lunar Strike OR Moonstep lands,
+  // and Blade briefly flashes a portrait when Blood Hunt lands - all timed
+  // overrides on top of everything else (see setLaughing/setAthenaHealing/
+  // setAthenaCurse/setTharoxGlory/setZerathysSoul/setAkyrosShadow/
+  // setAkyrosDodge/setBoingoHardpunch/setBoingoMiss/setChronoxTime/
+  // setChronoxCyclone/setAkyrosHidden/setZerathysCharge/setTharoxToss/
+  // setVeloryaStrike/setBladeStrike in dashboardScreen.js). Laughing takes
   // priority over hard-punch/miss; for Athena, Divine Restore (her rarer
   // self-heal special) beats Curse Strike (her routine every-turn action);
   // for Akyros, dodge (a reactive moment) beats Shadow Execution (an
@@ -131,8 +132,11 @@ export function renderCharacterCard(character, {
   // priority over her persistent "hidden" eclipse portrait - she still
   // attacks while eclipsed (it's her only offense), so the strike flash
   // should briefly show even mid-eclipse, then fall back to "hidden" once
-  // the flash timer ends. "Hidden" in turn takes priority over her injured
-  // look, since she's cloaked regardless of how hurt she is underneath.
+  // the flash timer ends. Blade's Blood Hunt flash similarly takes priority
+  // over his persistent "alive" post-Rebirth portrait, for the same reason -
+  // he keeps attacking after reviving, and the strike flash should still
+  // show, falling back to "alive" between hits. Both "hidden" and "alive"
+  // in turn take priority over the respective character's injured look.
   const isInjured = !character.isKO && character.hearts <= character.maxHearts / 2;
   if (character.id === 'boingo' && isLaughing && !character.isKO) {
     portrait.src = 'assets/images/boingo_laughing.jpg';
@@ -166,6 +170,8 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/velorya_strike.jpg';
   } else if (character.id === 'velorya' && character.untargetable && !character.isKO) {
     portrait.src = 'assets/images/velorya_hided.jpg';
+  } else if (character.id === 'blade' && isBladeStrike && !character.isKO) {
+    portrait.src = 'assets/images/blade_strike.jpg';
   } else if (character.id === 'blade' && character.special.rebirthUsed) {
     portrait.src = 'assets/images/blade_alive.jpg';
   } else {

@@ -118,6 +118,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // as the flags above.
   let veloryaStrikeCharacterIds = new Set();
   let veloryaStrikeClearTimer = null;
+  // Character ids to briefly show Blade's Blood Hunt portrait on - same
+  // explicit-timer pattern as the flags above.
+  let bladeStrikeCharacterIds = new Set();
+  let bladeStrikeClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -565,6 +569,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isTharoxToss: tharoxTossCharacterIds.has(character.id),
           isAthenaCurse: athenaCurseCharacterIds.has(character.id),
           isVeloryaStrike: veloryaStrikeCharacterIds.has(character.id),
+          isBladeStrike: bladeStrikeCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -903,6 +908,7 @@ export function renderDashboard(container, game, { onRestart }) {
       if (streak >= 3) shakeCharacterIds.add(targetId);
       clawCharacterIds.add(targetId);
       clawCounts.set(targetId, streak);
+      if (!game.characters[characterId].isKO) setBladeStrike(characterId);
     }
     playPostActionSounds(actionId, targetId, logBefore);
     finishAction(characterId);
@@ -1160,6 +1166,18 @@ export function renderDashboard(container, game, { onRestart }) {
     veloryaStrikeClearTimer = setTimeout(() => {
       veloryaStrikeClearTimer = null;
       veloryaStrikeCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Blade's Blood Hunt portrait for a fixed duration - same reasoning
+  // as setLaughing above.
+  function setBladeStrike(characterId) {
+    bladeStrikeCharacterIds.add(characterId);
+    if (bladeStrikeClearTimer) clearTimeout(bladeStrikeClearTimer);
+    bladeStrikeClearTimer = setTimeout(() => {
+      bladeStrikeClearTimer = null;
+      bladeStrikeCharacterIds = new Set();
       render();
     }, 1600);
   }
