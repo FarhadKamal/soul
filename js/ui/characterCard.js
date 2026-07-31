@@ -98,7 +98,12 @@ export function renderCharacterCard(character, {
   portraitWrap.className = 'portrait-wrap';
   const portrait = document.createElement('img');
   portrait.className = 'portrait';
-  portrait.src = `assets/portraits/${character.id}.png`;
+  // Switch to the injured portrait once hurt down to half health or below -
+  // KO'd characters keep the injured look too rather than reverting.
+  const isInjured = !character.isKO && character.hearts <= character.maxHearts / 2;
+  portrait.src = isInjured || character.isKO
+    ? `assets/images/injured/${character.id}.jpg`
+    : `assets/portraits/${character.id}.png`;
   portrait.alt = def.name;
   portraitWrap.appendChild(portrait);
   card.appendChild(portraitWrap);
