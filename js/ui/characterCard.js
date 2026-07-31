@@ -107,12 +107,17 @@ export function renderCharacterCard(character, {
   // for him (explodes on someone else, or comes back to heal him), and
   // Athena briefly flashes a healing portrait when Divine Restore triggers -
   // both timed overrides on top of everything else (see setLaughing/
-  // setAthenaHealing in dashboardScreen.js).
+  // setAthenaHealing in dashboardScreen.js). Velorya shows a "hidden" portrait
+  // for as long as Lunar Eclipse's untargetable status lasts (persistent
+  // state, not a timed flash) - takes priority over her injured look since
+  // she's cloaked regardless of how hurt she is underneath.
   const isInjured = !character.isKO && character.hearts <= character.maxHearts / 2;
   if (character.id === 'boingo' && isLaughing && !character.isKO) {
     portrait.src = 'assets/images/boingo_laughing.jpg';
   } else if (character.id === 'athena' && isAthenaHealing && !character.isKO) {
     portrait.src = 'assets/images/athena_heal.jpg';
+  } else if (character.id === 'velorya' && character.untargetable && !character.isKO) {
+    portrait.src = 'assets/images/velorya_hided.jpg';
   } else if (character.id === 'blade' && character.special.rebirthUsed) {
     portrait.src = 'assets/images/blade_alive.jpg';
   } else {
