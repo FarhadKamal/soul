@@ -97,6 +97,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // same explicit-timer pattern as the flags above.
   let chronoxCycloneCharacterIds = new Set();
   let chronoxCycloneClearTimer = null;
+  // Character ids to briefly show Akyros's Hidden Mark portrait on - same
+  // explicit-timer pattern as the flags above.
+  let akyrosHiddenCharacterIds = new Set();
+  let akyrosHiddenClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -539,6 +543,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isBoingoHardpunch: boingoHardpunchCharacterIds.has(character.id),
           isBoingoMiss: boingoMissCharacterIds.has(character.id),
           isChronoxCyclone: chronoxCycloneCharacterIds.has(character.id),
+          isAkyrosHidden: akyrosHiddenCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -848,6 +853,9 @@ export function renderDashboard(container, game, { onRestart }) {
     if (actionId === 'timeFreeze' && !game.characters[characterId].isKO) {
       setChronoxTime(characterId);
     }
+    if (actionId === 'hiddenMark' && !game.characters[characterId].isKO) {
+      setAkyrosHidden(characterId);
+    }
     if ((actionId === 'titanSmash' || actionId === 'glorySmash') && targetId && !result?.dodged && result?.amountDealt > 0) {
       shakeCharacterIds.add(targetId);
     }
@@ -1059,6 +1067,18 @@ export function renderDashboard(container, game, { onRestart }) {
     chronoxCycloneClearTimer = setTimeout(() => {
       chronoxCycloneClearTimer = null;
       chronoxCycloneCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Akyros's Hidden Mark portrait for a fixed duration - same
+  // reasoning as setLaughing above.
+  function setAkyrosHidden(characterId) {
+    akyrosHiddenCharacterIds.add(characterId);
+    if (akyrosHiddenClearTimer) clearTimeout(akyrosHiddenClearTimer);
+    akyrosHiddenClearTimer = setTimeout(() => {
+      akyrosHiddenClearTimer = null;
+      akyrosHiddenCharacterIds = new Set();
       render();
     }, 1600);
   }

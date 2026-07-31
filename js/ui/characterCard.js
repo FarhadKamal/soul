@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -110,19 +110,20 @@ export function renderCharacterCard(character, {
   // a healing portrait when Divine Restore triggers, Tharox briefly flashes
   // a portrait when Glory Smash triggers, Zerathys briefly flashes a
   // portrait when Soul Swap triggers, Akyros briefly flashes a portrait when
-  // Shadow Execution lands OR he dodges an attack, and Chronox briefly
-  // flashes a portrait when Time Freeze OR Cyclone Punch triggers - all
-  // timed overrides on top of everything else (see setLaughing/
-  // setAthenaHealing/setTharoxGlory/setZerathysSoul/setAkyrosShadow/
-  // setAkyrosDodge/setBoingoHardpunch/setBoingoMiss/setChronoxTime/
-  // setChronoxCyclone in dashboardScreen.js). Laughing takes priority over
-  // hard-punch/miss, dodge takes priority over Shadow Execution, and Time
-  // Freeze (his rarer special) takes priority over Cyclone Punch (his
-  // every-turn normal attack), in the unlikely case multiple flags flash at
-  // once. Velorya shows a "hidden" portrait for as long as Lunar Eclipse's
-  // untargetable status lasts (persistent state, not a timed flash) - takes
-  // priority over her injured look since she's cloaked regardless of how
-  // hurt she is underneath.
+  // he dodges an attack, Shadow Execution lands, OR Hidden Mark is cast, and
+  // Chronox briefly flashes a portrait when Time Freeze OR Cyclone Punch
+  // triggers - all timed overrides on top of everything else (see
+  // setLaughing/setAthenaHealing/setTharoxGlory/setZerathysSoul/
+  // setAkyrosShadow/setAkyrosDodge/setBoingoHardpunch/setBoingoMiss/
+  // setChronoxTime/setChronoxCyclone/setAkyrosHidden in dashboardScreen.js).
+  // Laughing takes priority over hard-punch/miss; for Akyros, dodge (a
+  // reactive moment) beats Shadow Execution (an eventful special) beats
+  // Hidden Mark (his routine setup move); Time Freeze (Chronox's rarer
+  // special) beats Cyclone Punch (his every-turn normal attack) - in the
+  // unlikely case multiple flags flash at once. Velorya shows a "hidden"
+  // portrait for as long as Lunar Eclipse's untargetable status lasts
+  // (persistent state, not a timed flash) - takes priority over her injured
+  // look since she's cloaked regardless of how hurt she is underneath.
   const isInjured = !character.isKO && character.hearts <= character.maxHearts / 2;
   if (character.id === 'boingo' && isLaughing && !character.isKO) {
     portrait.src = 'assets/images/boingo_laughing.jpg';
@@ -140,6 +141,8 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/akyros_dodge.jpg';
   } else if (character.id === 'akyros' && isAkyrosShadow && !character.isKO) {
     portrait.src = 'assets/images/akyros_shadow.jpg';
+  } else if (character.id === 'akyros' && isAkyrosHidden && !character.isKO) {
+    portrait.src = 'assets/images/akyros_hidden.jpg';
   } else if (character.id === 'chronox' && isChronoxTime && !character.isKO) {
     portrait.src = 'assets/images/chronox_time.jpg';
   } else if (character.id === 'chronox' && isChronoxCyclone && !character.isKO) {
