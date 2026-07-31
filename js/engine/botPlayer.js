@@ -236,8 +236,17 @@ function chooseZerathysMove(character, game, usable) {
   if (chargeCount >= 2) {
     return { actionId: 'thunderWrath', targetId: pickDefaultTarget(game, character, 'thunderWrath') };
   }
-  // Low hearts: don't sit around charging, take the guaranteed hit now.
-  if (character.hearts <= LOW_HEARTS_THRESHOLD) {
+  // Low hearts: normally don't sit around charging, take the guaranteed hit
+  // now - but only when there's an actual reason to rush (a live cursing
+  // Athena punishes every turn spent charging via the mirror). Charging
+  // itself never costs Zerathys anything defensively against a non-mirror
+  // opponent - the enemy gets their turn regardless of which Zerathys move
+  // is chosen - so cashing in early just for being low on hearts throws
+  // away a bigger, more decisive hit for no protective benefit. Confirmed
+  // via a real match: cashing in a weak 1-damage hit at 1 heart left a
+  // 2-heart Akyros alive for one more turn, which then landed the killing
+  // blow - charging once first would have secured the kill instead.
+  if (character.hearts <= LOW_HEARTS_THRESHOLD && isCursedByLiveAthena(game, character)) {
     return { actionId: 'thunderWrath', targetId: pickDefaultTarget(game, character, 'thunderWrath') };
   }
   if (byId.chargeUp) {
