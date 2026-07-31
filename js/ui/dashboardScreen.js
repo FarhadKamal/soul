@@ -68,6 +68,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // explicit-timer pattern as the flags above.
   let tharoxGloryCharacterIds = new Set();
   let tharoxGloryClearTimer = null;
+  // Character ids to briefly show Zerathys's Soul Swap portrait on - same
+  // explicit-timer pattern as the flags above.
+  let zerathysSoulCharacterIds = new Set();
+  let zerathysSoulClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -503,6 +507,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isLaughing: laughingCharacterIds.has(character.id),
           isAthenaHealing: athenaHealingCharacterIds.has(character.id),
           isTharoxGlory: tharoxGloryCharacterIds.has(character.id),
+          isZerathysSoul: zerathysSoulCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -751,6 +756,7 @@ export function renderDashboard(container, game, { onRestart }) {
     if (actionId === 'soulSwap') {
       executeAction(game, characterId, 'soulSwap', targetId);
       playActionSound('soulSwap');
+      setZerathysSoul(characterId);
 
       if (isAuto) {
         // The whole move was auto-picked (turn timer expired, or a PC bot's
@@ -928,6 +934,18 @@ export function renderDashboard(container, game, { onRestart }) {
     tharoxGloryClearTimer = setTimeout(() => {
       tharoxGloryClearTimer = null;
       tharoxGloryCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Zerathys's Soul Swap portrait for a fixed duration - same
+  // reasoning as setLaughing above.
+  function setZerathysSoul(characterId) {
+    zerathysSoulCharacterIds.add(characterId);
+    if (zerathysSoulClearTimer) clearTimeout(zerathysSoulClearTimer);
+    zerathysSoulClearTimer = setTimeout(() => {
+      zerathysSoulClearTimer = null;
+      zerathysSoulCharacterIds = new Set();
       render();
     }, 1600);
   }

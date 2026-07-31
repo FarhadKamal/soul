@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -105,13 +105,15 @@ export function renderCharacterCard(character, {
   // ordinary injured look (Rebirth always leaves him well below half health).
   // Boingo briefly flashes a laughing portrait when the Jester Ball pays off
   // for him (explodes on someone else, or comes back to heal him), Athena
-  // briefly flashes a healing portrait when Divine Restore triggers, and
-  // Tharox briefly flashes a portrait when Glory Smash triggers - all timed
-  // overrides on top of everything else (see setLaughing/setAthenaHealing/
-  // setTharoxGlory in dashboardScreen.js). Velorya shows a "hidden" portrait
-  // for as long as Lunar Eclipse's untargetable status lasts (persistent
-  // state, not a timed flash) - takes priority over her injured look since
-  // she's cloaked regardless of how hurt she is underneath.
+  // briefly flashes a healing portrait when Divine Restore triggers, Tharox
+  // briefly flashes a portrait when Glory Smash triggers, and Zerathys
+  // briefly flashes a portrait when Soul Swap triggers - all timed overrides
+  // on top of everything else (see setLaughing/setAthenaHealing/
+  // setTharoxGlory/setZerathysSoul in dashboardScreen.js). Velorya shows a
+  // "hidden" portrait for as long as Lunar Eclipse's untargetable status
+  // lasts (persistent state, not a timed flash) - takes priority over her
+  // injured look since she's cloaked regardless of how hurt she is
+  // underneath.
   const isInjured = !character.isKO && character.hearts <= character.maxHearts / 2;
   if (character.id === 'boingo' && isLaughing && !character.isKO) {
     portrait.src = 'assets/images/boingo_laughing.jpg';
@@ -119,6 +121,8 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/athena_heal.jpg';
   } else if (character.id === 'tharox' && isTharoxGlory && !character.isKO) {
     portrait.src = 'assets/images/tharox_glory.jpg';
+  } else if (character.id === 'zerathys' && isZerathysSoul && !character.isKO) {
+    portrait.src = 'assets/images/zerathys_soul.jpg';
   } else if (character.id === 'velorya' && character.untargetable && !character.isKO) {
     portrait.src = 'assets/images/velorya_hided.jpg';
   } else if (character.id === 'blade' && character.special.rebirthUsed) {
