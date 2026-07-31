@@ -127,6 +127,11 @@ export function renderDashboard(container, game, { onRestart }) {
   // explicit-timer pattern as the flags above.
   let zerathysStrikeCharacterIds = new Set();
   let zerathysStrikeClearTimer = null;
+  // Character ids to briefly show Tharox's Smash portrait on - covers plain
+  // Smash and Titan Smash only, NOT Glory Smash (which has its own
+  // tharox_glory portrait) - same explicit-timer pattern as the flags above.
+  let tharoxSmashCharacterIds = new Set();
+  let tharoxSmashClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -576,6 +581,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isVeloryaStrike: veloryaStrikeCharacterIds.has(character.id),
           isBladeStrike: bladeStrikeCharacterIds.has(character.id),
           isZerathysStrike: zerathysStrikeCharacterIds.has(character.id),
+          isTharoxSmash: tharoxSmashCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -905,6 +911,9 @@ export function renderDashboard(container, game, { onRestart }) {
     if (actionId === 'thunderWrath' && !result?.dodged && !game.characters[characterId].isKO) {
       setZerathysStrike(characterId);
     }
+    if ((actionId === 'titanSmash' || actionId === 'smash') && !result?.dodged && result?.amountDealt > 0 && !game.characters[characterId].isKO) {
+      setTharoxSmash(characterId);
+    }
     if ((actionId === 'titanSmash' || actionId === 'glorySmash') && targetId && !result?.dodged && result?.amountDealt > 0) {
       shakeCharacterIds.add(targetId);
     }
@@ -1201,6 +1210,18 @@ export function renderDashboard(container, game, { onRestart }) {
     zerathysStrikeClearTimer = setTimeout(() => {
       zerathysStrikeClearTimer = null;
       zerathysStrikeCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Tharox's Smash portrait (plain Smash or Titan Smash) for a fixed
+  // duration - same reasoning as setLaughing above.
+  function setTharoxSmash(characterId) {
+    tharoxSmashCharacterIds.add(characterId);
+    if (tharoxSmashClearTimer) clearTimeout(tharoxSmashClearTimer);
+    tharoxSmashClearTimer = setTimeout(() => {
+      tharoxSmashClearTimer = null;
+      tharoxSmashCharacterIds = new Set();
       render();
     }, 1600);
   }
