@@ -114,8 +114,7 @@ export function renderCharacterCard(character, {
   // dodges an attack, Shadow Execution lands, OR Hidden Mark is cast, Chronox
   // briefly flashes a portrait when Time Freeze OR Cyclone Punch triggers,
   // and Velorya briefly flashes a portrait when Lunar Strike OR Moonstep
-  // lands - all
-  // timed overrides on top of everything else (see setLaughing/
+  // lands - all timed overrides on top of everything else (see setLaughing/
   // setAthenaHealing/setAthenaCurse/setTharoxGlory/setZerathysSoul/
   // setAkyrosShadow/setAkyrosDodge/setBoingoHardpunch/setBoingoMiss/
   // setChronoxTime/setChronoxCyclone/setAkyrosHidden/setZerathysCharge/
@@ -128,13 +127,12 @@ export function renderCharacterCard(character, {
   // move); for Tharox, Glory Smash (his special) beats Titan Toss (his
   // routine setup move); Time Freeze (Chronox's rarer special) beats Cyclone
   // Punch (his every-turn normal attack) - in the unlikely case multiple
-  // flags flash at once. Velorya's persistent "hidden" portrait (shown for
-  // as long as Lunar Eclipse's untargetable status lasts) takes priority
-  // over her Lunar Strike flash, since she can't have attacked from behind
-  // the eclipse (Lunar Strike/Moonstep are her only attacks, and eclipse
-  // only ends after 3 of them, so a stale flash could otherwise linger into
-  // an eclipsed render) - and both take priority over her injured look
-  // since she's cloaked regardless of how hurt she is underneath.
+  // flags flash at once. Velorya's Lunar Strike/Moonstep flash takes
+  // priority over her persistent "hidden" eclipse portrait - she still
+  // attacks while eclipsed (it's her only offense), so the strike flash
+  // should briefly show even mid-eclipse, then fall back to "hidden" once
+  // the flash timer ends. "Hidden" in turn takes priority over her injured
+  // look, since she's cloaked regardless of how hurt she is underneath.
   const isInjured = !character.isKO && character.hearts <= character.maxHearts / 2;
   if (character.id === 'boingo' && isLaughing && !character.isKO) {
     portrait.src = 'assets/images/boingo_laughing.jpg';
@@ -164,10 +162,10 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/chronox_time.jpg';
   } else if (character.id === 'chronox' && isChronoxCyclone && !character.isKO) {
     portrait.src = 'assets/images/chronox_cyclone.jpg';
-  } else if (character.id === 'velorya' && character.untargetable && !character.isKO) {
-    portrait.src = 'assets/images/velorya_hided.jpg';
   } else if (character.id === 'velorya' && isVeloryaStrike && !character.isKO) {
     portrait.src = 'assets/images/velorya_strike.jpg';
+  } else if (character.id === 'velorya' && character.untargetable && !character.isKO) {
+    portrait.src = 'assets/images/velorya_hided.jpg';
   } else if (character.id === 'blade' && character.special.rebirthUsed) {
     portrait.src = 'assets/images/blade_alive.jpg';
   } else {
