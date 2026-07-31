@@ -146,6 +146,11 @@ export function renderDashboard(container, game, { onRestart }) {
   // explicit-timer pattern as the flags above.
   let veloryaCastingCharacterIds = new Set();
   let veloryaCastingClearTimer = null;
+  // Character ids to briefly show Boingo's normal-punch portrait on (a Chaos
+  // Gamble "draw" roll landing 1 damage) - same explicit-timer pattern as
+  // the flags above.
+  let boingoNormalpunchCharacterIds = new Set();
+  let boingoNormalpunchClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -599,6 +604,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isAkyrosFatal: akyrosFatalCharacterIds.has(character.id),
           isBoingoThrowing: boingoThrowingCharacterIds.has(character.id),
           isVeloryaCasting: veloryaCastingCharacterIds.has(character.id),
+          isBoingoNormalpunch: boingoNormalpunchCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -840,6 +846,9 @@ export function renderDashboard(container, game, { onRestart }) {
       if (outcome === 'win' && !rpsResult?.dodged) {
         shakeCharacterIds.add(targetId);
         if (!game.characters[characterId].isKO) setBoingoHardpunch(characterId);
+      }
+      if (outcome === 'draw' && !rpsResult?.dodged && !game.characters[characterId].isKO) {
+        setBoingoNormalpunch(characterId);
       }
       if (outcome !== 'lose') {
         playPostActionSounds(actionId, targetId, logBefore);
@@ -1284,6 +1293,18 @@ export function renderDashboard(container, game, { onRestart }) {
     veloryaCastingClearTimer = setTimeout(() => {
       veloryaCastingClearTimer = null;
       veloryaCastingCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Boingo's normal-punch portrait (Chaos Gamble "draw" roll) for a
+  // fixed duration - same reasoning as setLaughing above.
+  function setBoingoNormalpunch(characterId) {
+    boingoNormalpunchCharacterIds.add(characterId);
+    if (boingoNormalpunchClearTimer) clearTimeout(boingoNormalpunchClearTimer);
+    boingoNormalpunchClearTimer = setTimeout(() => {
+      boingoNormalpunchClearTimer = null;
+      boingoNormalpunchCharacterIds = new Set();
       render();
     }, 1600);
   }
