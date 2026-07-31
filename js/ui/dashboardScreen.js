@@ -105,6 +105,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // explicit-timer pattern as the flags above.
   let zerathysChargeCharacterIds = new Set();
   let zerathysChargeClearTimer = null;
+  // Character ids to briefly show Tharox's Titan Toss portrait on - same
+  // explicit-timer pattern as the flags above.
+  let tharoxTossCharacterIds = new Set();
+  let tharoxTossClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -549,6 +553,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isChronoxCyclone: chronoxCycloneCharacterIds.has(character.id),
           isAkyrosHidden: akyrosHiddenCharacterIds.has(character.id),
           isZerathysCharge: zerathysChargeCharacterIds.has(character.id),
+          isTharoxToss: tharoxTossCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -864,6 +869,9 @@ export function renderDashboard(container, game, { onRestart }) {
     if (actionId === 'chargeUp' && !game.characters[characterId].isKO) {
       setZerathysCharge(characterId);
     }
+    if (actionId === 'titanToss' && !game.characters[characterId].isKO) {
+      setTharoxToss(characterId);
+    }
     if ((actionId === 'titanSmash' || actionId === 'glorySmash') && targetId && !result?.dodged && result?.amountDealt > 0) {
       shakeCharacterIds.add(targetId);
     }
@@ -1099,6 +1107,18 @@ export function renderDashboard(container, game, { onRestart }) {
     zerathysChargeClearTimer = setTimeout(() => {
       zerathysChargeClearTimer = null;
       zerathysChargeCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Tharox's Titan Toss portrait for a fixed duration - same
+  // reasoning as setLaughing above.
+  function setTharoxToss(characterId) {
+    tharoxTossCharacterIds.add(characterId);
+    if (tharoxTossClearTimer) clearTimeout(tharoxTossClearTimer);
+    tharoxTossClearTimer = setTimeout(() => {
+      tharoxTossClearTimer = null;
+      tharoxTossCharacterIds = new Set();
       render();
     }, 1600);
   }

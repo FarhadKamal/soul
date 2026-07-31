@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -108,24 +108,25 @@ export function renderCharacterCard(character, {
   // hard-punch portrait when a Chaos Gamble "win" roll lands, or a miss
   // portrait when a Chaos Gamble "lose" roll whiffs, Athena briefly flashes
   // a healing portrait when Divine Restore triggers, Tharox briefly flashes
-  // a portrait when Glory Smash triggers, Zerathys briefly flashes a
-  // portrait when Soul Swap OR Charge Up triggers, Akyros briefly flashes a
-  // portrait when he dodges an attack, Shadow Execution lands, OR Hidden
-  // Mark is cast, and Chronox briefly flashes a portrait when Time Freeze OR
-  // Cyclone Punch triggers - all timed overrides on top of everything else
-  // (see setLaughing/setAthenaHealing/setTharoxGlory/setZerathysSoul/
-  // setAkyrosShadow/setAkyrosDodge/setBoingoHardpunch/setBoingoMiss/
-  // setChronoxTime/setChronoxCyclone/setAkyrosHidden/setZerathysCharge in
-  // dashboardScreen.js). Laughing takes priority over hard-punch/miss; for
-  // Akyros, dodge (a reactive moment) beats Shadow Execution (an eventful
-  // special) beats Hidden Mark (his routine setup move); for Zerathys, Soul
-  // Swap (his special) beats Charge Up (his routine setup move); Time Freeze
-  // (Chronox's rarer special) beats Cyclone Punch (his every-turn normal
-  // attack) - in the unlikely case multiple flags flash at once. Velorya
-  // shows a "hidden" portrait for as long as Lunar Eclipse's untargetable
-  // status lasts (persistent state, not a timed flash) - takes priority over
-  // her injured look since she's cloaked regardless of how hurt she is
-  // underneath.
+  // a portrait when Glory Smash OR Titan Toss triggers, Zerathys briefly
+  // flashes a portrait when Soul Swap OR Charge Up triggers, Akyros briefly
+  // flashes a portrait when he dodges an attack, Shadow Execution lands, OR
+  // Hidden Mark is cast, and Chronox briefly flashes a portrait when Time
+  // Freeze OR Cyclone Punch triggers - all timed overrides on top of
+  // everything else (see setLaughing/setAthenaHealing/setTharoxGlory/
+  // setZerathysSoul/setAkyrosShadow/setAkyrosDodge/setBoingoHardpunch/
+  // setBoingoMiss/setChronoxTime/setChronoxCyclone/setAkyrosHidden/
+  // setZerathysCharge/setTharoxToss in dashboardScreen.js). Laughing takes
+  // priority over hard-punch/miss; for Akyros, dodge (a reactive moment)
+  // beats Shadow Execution (an eventful special) beats Hidden Mark (his
+  // routine setup move); for Zerathys, Soul Swap (his special) beats Charge
+  // Up (his routine setup move); for Tharox, Glory Smash (his special) beats
+  // Titan Toss (his routine setup move); Time Freeze (Chronox's rarer
+  // special) beats Cyclone Punch (his every-turn normal attack) - in the
+  // unlikely case multiple flags flash at once. Velorya shows a "hidden"
+  // portrait for as long as Lunar Eclipse's untargetable status lasts
+  // (persistent state, not a timed flash) - takes priority over her injured
+  // look since she's cloaked regardless of how hurt she is underneath.
   const isInjured = !character.isKO && character.hearts <= character.maxHearts / 2;
   if (character.id === 'boingo' && isLaughing && !character.isKO) {
     portrait.src = 'assets/images/boingo_laughing.jpg';
@@ -137,6 +138,8 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/athena_heal.jpg';
   } else if (character.id === 'tharox' && isTharoxGlory && !character.isKO) {
     portrait.src = 'assets/images/tharox_glory.jpg';
+  } else if (character.id === 'tharox' && isTharoxToss && !character.isKO) {
+    portrait.src = 'assets/images/tharox_toss.jpg';
   } else if (character.id === 'zerathys' && isZerathysSoul && !character.isKO) {
     portrait.src = 'assets/images/zerathys_soul.jpg';
   } else if (character.id === 'zerathys' && isZerathysCharge && !character.isKO) {
