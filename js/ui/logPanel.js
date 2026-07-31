@@ -58,8 +58,11 @@ function formatEntry(entry) {
     }
     case 'jester-ball-pass':
       return `${nameOf(entry.fromCharacterId)} passed the Jester Ball to ${nameOf(entry.toCharacterId)}`;
-    case 'jester-ball-take':
-      return `${nameOf(entry.targetCharacterId)} took the Jester Ball — -4 hearts`;
+    case 'jester-ball-take': {
+      let text = `${nameOf(entry.targetCharacterId)} took the Jester Ball — -4 hearts`;
+      if (entry.koTriggered) text += ` — ${nameOf(entry.targetCharacterId)} KO'd!`;
+      return text;
+    }
     default:
       return null;
   }
