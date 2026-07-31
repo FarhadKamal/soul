@@ -99,11 +99,27 @@ function rosterLines(game) {
   return game.players.map((p, i) => `${i + 1} ${p.characterIds.map(nameOf).join(', ')}${pcTag(p)}`);
 }
 
+// Final result line, appended once the match has ended, so a copied log is
+// self-contained about who won (or that it was a draw) without needing the
+// on-screen banner. Mirrors the winner/draw check in dashboardScreen.js.
+function resultLine(game) {
+  if (game.phase !== 'game-over') return null;
+  const winner = game.players.find((p) => p.id === game.winnerPlayerId);
+  if (!winner) return 'Result: draw game!';
+  const isTeamMode = game.players.some((p) => p.characterIds.length > 1);
+  const label = isTeamMode
+    ? `Team ${game.players.indexOf(winner) + 1} (${winner.characterIds.map(nameOf).join(', ')})`
+    : `${game.players.indexOf(winner) + 1} ${winner.characterIds.map(nameOf).join(', ')}`;
+  return `Result: ${label} wins!`;
+}
+
 // Plain-text lines for the full log, in order - shared by the on-screen
 // panel and the "Copy Log" button so both always match exactly.
 export function formatLogAsText(game) {
   const entries = game.log.map(formatEntry).filter(Boolean);
   const lines = entries.length === 0 ? ['Match started.'] : entries;
+  const result = resultLine(game);
+  if (result) lines.push(result);
   return [...rosterLines(game), ...lines].join('\n');
 }
 
@@ -129,6 +145,13 @@ export function renderLogPanel(game) {
       div.textContent = text;
       panel.appendChild(div);
     });
+  }
+  const result = resultLine(game);
+  if (result) {
+    const div = document.createElement('div');
+    div.className = 'log-entry log-result-line';
+    div.textContent = result;
+    panel.appendChild(div);
   }
   return panel;
 }
