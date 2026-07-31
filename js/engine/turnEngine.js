@@ -70,7 +70,7 @@ export function executeAction(game, characterId, actionId, targetId, extra) {
   if (result?.mirrorLogEntry) log.push(result.mirrorLogEntry);
   if (result?.mirrorResult?.rebirthLogEntry) log.push(result.mirrorResult.rebirthLogEntry);
   applyEndOfActionChecks(game);
-  game.log.push(...log, { type: 'end-action', round: game.round, characterId, actionId, targetId });
+  game.log.push(...log, { type: 'end-action', round: game.round, characterId, actionId, targetId, hearts: heartsSnapshot(game) });
   return result;
 }
 
@@ -80,8 +80,20 @@ export function resolveJesterBall(game, holderCharacterId, choice, extra) {
   const result = res.execute(game, log, extra);
   if (result?.rebirthLogEntry) log.push(result.rebirthLogEntry);
   applyEndOfActionChecks(game);
-  game.log.push(...log, { type: 'end-action', round: game.round, characterId: holderCharacterId, actionId: `jesterBall:${choice}` });
+  game.log.push(...log, { type: 'end-action', round: game.round, characterId: holderCharacterId, actionId: `jesterBall:${choice}`, hearts: heartsSnapshot(game) });
   return result;
+}
+
+// Snapshot of every character's current hearts (or 'KO'), taken right after
+// an action fully resolves - attached to the end-action marker so the log
+// can show a running health readout after each turn without needing the
+// reader to hand-tally damage across the whole match.
+function heartsSnapshot(game) {
+  const snap = {};
+  for (const c of Object.values(game.characters)) {
+    snap[c.id] = c.isKO ? 'KO' : c.hearts;
+  }
+  return snap;
 }
 
 function applyEndOfActionChecks(game) {

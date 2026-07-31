@@ -81,6 +81,14 @@ function labelFor(actionId) {
   return map[actionId] || actionId;
 }
 
+// Compact "Name:hearts" readout for every living-or-KO'd character, e.g.
+// "[Boingo:6 Velorya:KO Athena:7 Zerathys:3]" - appended after each action's
+// log line so a pasted log is easy to verify without hand-tallying damage.
+function heartsSuffix(hearts) {
+  if (!hearts) return '';
+  return ' [' + Object.entries(hearts).map(([id, v]) => `${nameOf(id)}:${v}`).join(' ') + ']';
+}
+
 function pcTag(player) {
   return player.isPC ? ' (PC)' : ' (Human)';
 }
@@ -116,10 +124,37 @@ function resultLine(game) {
   return `Result: ${label} wins!`;
 }
 
+// Walks game.log and pairs each visible entry's text with the hearts
+// snapshot taken at the end of whichever action produced it (the
+// 'end-action' marker that follows it, possibly several entries later since
+// one action can emit multiple visible lines - e.g. an attack plus a
+// deferred rebirth/curse-mirror line all share the same end-of-action
+// snapshot). Only the LAST visible line of each action block gets the
+// suffix, so multi-line actions don't repeat the same readout.
+function entriesWithHearts(game) {
+  const out = [];
+  let pendingTexts = [];
+  for (const entry of game.log) {
+    if (entry.type === 'end-action') {
+      if (pendingTexts.length) {
+        const lastIdx = pendingTexts.length - 1;
+        pendingTexts[lastIdx] += heartsSuffix(entry.hearts);
+        out.push(...pendingTexts);
+        pendingTexts = [];
+      }
+      continue;
+    }
+    const text = formatEntry(entry);
+    if (text) pendingTexts.push(text);
+  }
+  out.push(...pendingTexts);
+  return out;
+}
+
 // Plain-text lines for the full log, in order - shared by the on-screen
 // panel and the "Copy Log" button so both always match exactly.
 export function formatLogAsText(game) {
-  const entries = game.log.map(formatEntry).filter(Boolean);
+  const entries = entriesWithHearts(game);
   const lines = entries.length === 0 ? ['Match started.'] : entries;
   const result = resultLine(game);
   if (result) lines.push(result);
@@ -129,7 +164,7 @@ export function formatLogAsText(game) {
 export function renderLogPanel(game) {
   const panel = document.createElement('div');
   panel.className = 'log-panel';
-  const entries = game.log.map(formatEntry).filter(Boolean);
+  const entries = entriesWithHearts(game);
   rosterLines(game).forEach((line) => {
     const div = document.createElement('div');
     div.className = 'log-entry log-team-line';
