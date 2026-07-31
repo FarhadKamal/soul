@@ -112,6 +112,23 @@ function focusFireTarget(game, targetIds) {
   return pickRandom(tied);
 }
 
+// True if Athena is alive, currently cursing someone OTHER than this
+// attacker, and a legal target - meaning a hit on Athena deals damage to
+// BOTH her and the cursed target (her own hit, plus the mirror) instead of
+// just one character taking it. Strictly better value than hitting the
+// cursed target directly for the same single action, as long as it isn't
+// this attacker being cursed (handled separately, since that mirror comes
+// back at them instead of being a bonus).
+function athenaDoubleDipTarget(game, character, targets) {
+  if (!targets.includes('athena')) return null;
+  const athena = game.characters['athena'];
+  const cursedId = athena?.special?.curseTargetCharacterId;
+  if (!cursedId || cursedId === character.id) return null;
+  const cursedTarget = game.characters[cursedId];
+  if (!cursedTarget || cursedTarget.isKO) return null;
+  return 'athena';
+}
+
 function pickDefaultTarget(game, character, actionId) {
   const targets = validTargetsFor(game, character, actionId);
   if (targets.length === 0) return null;
@@ -123,6 +140,11 @@ function pickDefaultTarget(game, character, actionId) {
     return false;
   });
   const pool = nonAthenaSafe.length > 0 ? nonAthenaSafe : targets;
+  // Hitting Athena while she's cursing someone else lands damage on both of
+  // them for the price of one action - take that free value over any other
+  // priority whenever it's available and safe.
+  const doubleDip = athenaDoubleDipTarget(game, character, pool);
+  if (doubleDip) return doubleDip;
   // Priority: secure a kill on whoever's already most wounded (focus fire)
   // over just retaliating against the most recent attacker - finishing a
   // target off is worth more than spreading damage around.
@@ -368,10 +390,14 @@ function chooseVeloryaMove(character, game, usable) {
   }
   if (byId.moonstep) {
     const targets = validTargetsFor(game, character, 'moonstep');
+    // Hitting a live Athena while she's cursing someone else lands damage
+    // on both of them for one action - worth more than the plain
+    // different-target bonus alone, so check it first.
+    const doubleDip = athenaDoubleDipTarget(game, character, targets);
     // Moonstep's -2 bonus requires a DIFFERENT target than her last attack -
     // prefer whichever valid target isn't lastTargetId to get the bonus.
     const differentTarget = targets.find((tid) => tid !== character.special.lastTargetId);
-    const targetId = differentTarget || biggestThreatTarget(game, character, targets) || lowestHeartsTarget(game, targets);
+    const targetId = doubleDip || differentTarget || biggestThreatTarget(game, character, targets) || lowestHeartsTarget(game, targets);
     if (targetId) {
       // If the only target is a live cursing Athena, every point of damage
       // she deals mirrors straight back onto her (both attacks ignore
