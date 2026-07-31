@@ -282,6 +282,51 @@ function chooseChronoxMove(character, game, usable) {
 function chooseAkyrosMove(character, game, usable) {
   const byId = Object.fromEntries(usable.map((a) => [a.actionId, a]));
   const markedTargets = validTargetsFor(game, character, 'shadowExecution');
+
+  const fatalTargets = validTargetsFor(game, character, 'fatalSlash');
+  // Self-curse-mirror handling: while Athena is cursing Akyros, every point
+  // of damage he lands on her mirrors straight back onto him (the mirror
+  // still passes through his shield normally, unlike Shadow Execution's own
+  // shield-ignoring hit). If she's marked, she'd normally be the preferred
+  // attack target below - avoid that unless she's the only living enemy, it
+  // secures an outright kill, or there's truly no safer move available.
+  const athenaIsCursingRisk = character.special.marks.has('athena')
+    && isCursedByLiveAthena(game, character)
+    && fatalTargets.includes('athena');
+  if (athenaIsCursingRisk) {
+    const athena = game.characters['athena'];
+    const shadowLegal = !!byId.shadowExecution && markedTargets.includes('athena');
+    const bestDamage = shadowLegal ? 3 : 2; // marked Fatal Slash is 2
+    const wouldKillAthenaNow = athena.hearts <= Math.max(0, bestDamage - (shadowLegal ? 0 : athena.shield));
+    const mirrorSurvivableNow = character.hearts > bestDamage;
+    const otherTargets = fatalTargets.filter((tid) => tid !== 'athena');
+    if (wouldKillAthenaNow) {
+      if (shadowLegal) return { actionId: 'shadowExecution', targetId: 'athena' };
+      return { actionId: 'fatalSlash', targetId: 'athena' };
+    }
+    if (otherTargets.length > 0) {
+      // A different living enemy exists - attack or mark them instead of
+      // risking the cursed trade with Athena at all.
+      const markedOther = otherTargets.find((tid) => character.special.marks.has(tid));
+      if (markedOther) return { actionId: 'fatalSlash', targetId: markedOther };
+      if (byId.hiddenMark) {
+        const markTargets = validTargetsFor(game, character, 'hiddenMark').filter((tid) => tid !== 'athena');
+        if (markTargets.length > 0) {
+          const targetId = biggestThreatTarget(game, character, markTargets) || lowestHeartsTarget(game, markTargets);
+          if (targetId) return { actionId: 'hiddenMark', targetId };
+        }
+      }
+      return { actionId: 'fatalSlash', targetId: pickRandom(otherTargets) };
+    }
+    // Athena's the only living enemy - if the trade would be self-lethal
+    // for no gain, there's nothing safer to do (Hidden Mark on her again
+    // isn't legal, she's already marked), so fall through and attack anyway
+    // since it's the only legal move left regardless of outcome.
+    if (!mirrorSurvivableNow) {
+      // Nothing better available - fall through to normal attack logic.
+    }
+  }
+
   // Shadow Execution secures a kill/heavy hit on an already-marked, weak
   // enemy - use it once one is low enough that -3 ignoring shields matters.
   // Also worth using early against a currently-shielded marked target,
@@ -299,7 +344,6 @@ function chooseAkyrosMove(character, game, usable) {
     }
   }
   // Prefer Fatal Slash on an already-marked target for the bonus damage.
-  const fatalTargets = validTargetsFor(game, character, 'fatalSlash');
   const markedFatalTarget = fatalTargets.find((tid) => character.special.marks.has(tid));
   if (markedFatalTarget) {
     return { actionId: 'fatalSlash', targetId: markedFatalTarget };
