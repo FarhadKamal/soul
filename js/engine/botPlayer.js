@@ -86,10 +86,19 @@ const LOW_HEARTS_THRESHOLD = 3;
 // a target has actually taken damage (missingHearts > 0) - otherwise it's
 // equivalent to "attack whoever's weakest" even at full health, which
 // isn't really "focus fire," just a baseline preference.
+// Only treats a wounded target as a focus-fire opportunity once they're
+// actually close to dying (at or below the same low-hearts threshold used
+// elsewhere) - otherwise a target that's taken a single stray point of
+// damage would outrank someone who's been repeatedly, heavily attacking
+// this character but happens to still be at full health. Confirmed via a
+// real match: two characters kept trading blows with each other purely
+// because they'd landed a hit on each other first, while a third player at
+// full health kept freely attacking both of them unchallenged the whole
+// game and mopped up the survivor.
 function focusFireTarget(game, targetIds) {
   const wounded = targetIds.filter((tid) => {
     const t = game.characters[tid];
-    return t.hearts < t.maxHearts;
+    return t.hearts < t.maxHearts && t.hearts <= LOW_HEARTS_THRESHOLD;
   });
   if (wounded.length === 0) return null;
   const maxMissing = Math.max(...wounded.map((tid) => {
