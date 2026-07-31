@@ -140,6 +140,12 @@ export function renderDashboard(container, game, { onRestart }) {
   // Jester Ball) - same explicit-timer pattern as the flags above.
   let boingoThrowingCharacterIds = new Set();
   let boingoThrowingClearTimer = null;
+  // Character ids to briefly show Velorya's casting portrait on (the moment
+  // Lunar Eclipse is cast - NOT the ongoing "hidden" look shown for the rest
+  // of the eclipse, which uses character.untargetable directly) - same
+  // explicit-timer pattern as the flags above.
+  let veloryaCastingCharacterIds = new Set();
+  let veloryaCastingClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -592,6 +598,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isTharoxSmash: tharoxSmashCharacterIds.has(character.id),
           isAkyrosFatal: akyrosFatalCharacterIds.has(character.id),
           isBoingoThrowing: boingoThrowingCharacterIds.has(character.id),
+          isVeloryaCasting: veloryaCastingCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -905,6 +912,9 @@ export function renderDashboard(container, game, { onRestart }) {
     }
     if (actionId === 'jesterBall' && !game.characters[characterId].isKO) {
       setBoingoThrowing(characterId);
+    }
+    if (actionId === 'lunarEclipse' && !game.characters[characterId].isKO) {
+      setVeloryaCasting(characterId);
     }
     if (actionId === 'hiddenMark' && !game.characters[characterId].isKO) {
       setAkyrosHidden(characterId);
@@ -1262,6 +1272,18 @@ export function renderDashboard(container, game, { onRestart }) {
     boingoThrowingClearTimer = setTimeout(() => {
       boingoThrowingClearTimer = null;
       boingoThrowingCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Velorya's casting portrait (the moment Lunar Eclipse is cast) for
+  // a fixed duration - same reasoning as setLaughing above.
+  function setVeloryaCasting(characterId) {
+    veloryaCastingCharacterIds.add(characterId);
+    if (veloryaCastingClearTimer) clearTimeout(veloryaCastingClearTimer);
+    veloryaCastingClearTimer = setTimeout(() => {
+      veloryaCastingClearTimer = null;
+      veloryaCastingCharacterIds = new Set();
       render();
     }, 1600);
   }
