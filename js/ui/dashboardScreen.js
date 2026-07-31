@@ -49,9 +49,15 @@ export function renderDashboard(container, game, { onRestart }) {
   let smokeCharacterIds = new Set();
   // Character ids to briefly show Boingo's laughing portrait on - the ball
   // either exploded on someone else (his mischief paid off) or came back to
-  // heal him. Always just Boingo himself; same consume-once-per-render
-  // pattern as the other one-shot visual flags.
+  // heal him. Always just Boingo himself. Unlike the other one-shot visual
+  // flags (which are pure CSS animations that play out on their own once
+  // triggered), this swaps an <img> src directly - so a portrait class alone
+  // isn't enough, and clearing it on "next render" is unreliable since a
+  // render can happen almost immediately after (e.g. a bot's turn starting).
+  // Held open on an explicit timer instead so it's actually visible for a
+  // fixed duration regardless of what else re-renders in between.
   let laughingCharacterIds = new Set();
+  let laughingClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -207,7 +213,9 @@ export function renderDashboard(container, game, { onRestart }) {
     clawCounts = new Map(); // consumed for this render only
     dodgeCharacterIds = new Set(); // consumed for this render only
     smokeCharacterIds = new Set(); // consumed for this render only
-    laughingCharacterIds = new Set(); // consumed for this render only
+    // laughingCharacterIds is NOT reset here - it clears itself via its own
+    // timer (see setLaughing below) so it stays visible for a fixed
+    // duration instead of vanishing on whatever render happens to come next.
     wrap.appendChild(renderActionPanel(activeCharId));
     const logPanelEl = renderLogPanel(game);
     wrap.appendChild(logPanelEl);
@@ -873,6 +881,19 @@ export function renderDashboard(container, game, { onRestart }) {
   // actually gets painted - an intermediate render() here would consume
   // and clear the one-shot smoke/shake flags before they're ever shown,
   // since the next render() resets them again before reading them.
+  // Shows Boingo's laughing portrait for a fixed duration, independent of
+  // how many renders happen in between (a bot's turn can start almost
+  // immediately after this resolves).
+  function setLaughing(characterId) {
+    laughingCharacterIds.add(characterId);
+    if (laughingClearTimer) clearTimeout(laughingClearTimer);
+    laughingClearTimer = setTimeout(() => {
+      laughingClearTimer = null;
+      laughingCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
   function explodeBallAsTake(holderId, { skipRender = false } = {}) {
     if (!game.jesterBall || game.jesterBall.holderCharacterId !== holderId) return;
     clearBallTimer();
@@ -903,7 +924,7 @@ export function renderDashboard(container, game, { onRestart }) {
         // never the holder who Takes it - so his mischief paid off either
         // way: flash his laughing portrait.
         if (thrownByCharacterId && !game.characters[thrownByCharacterId].isKO) {
-          laughingCharacterIds.add(thrownByCharacterId);
+          setLaughing(thrownByCharacterId);
         }
       }
     }
@@ -913,7 +934,7 @@ export function renderDashboard(container, game, { onRestart }) {
       // Divine Restore/Glory Smash, plus his laughing portrait.
       if (thrownByCharacterId && !game.characters[thrownByCharacterId].isKO) {
         divineLightCharacterIds.add(thrownByCharacterId);
-        laughingCharacterIds.add(thrownByCharacterId);
+        setLaughing(thrownByCharacterId);
       }
     }
     // Return/Pass consume the holder's turn action. Take does NOT - the
