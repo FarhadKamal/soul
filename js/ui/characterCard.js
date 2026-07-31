@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -106,10 +106,11 @@ export function renderCharacterCard(character, {
   // Boingo briefly flashes a laughing portrait when the Jester Ball pays off
   // for him (explodes on someone else, or comes back to heal him), Athena
   // briefly flashes a healing portrait when Divine Restore triggers, Tharox
-  // briefly flashes a portrait when Glory Smash triggers, and Zerathys
-  // briefly flashes a portrait when Soul Swap triggers - all timed overrides
-  // on top of everything else (see setLaughing/setAthenaHealing/
-  // setTharoxGlory/setZerathysSoul in dashboardScreen.js). Velorya shows a
+  // briefly flashes a portrait when Glory Smash triggers, Zerathys briefly
+  // flashes a portrait when Soul Swap triggers, and Akyros briefly flashes a
+  // portrait when Shadow Execution lands - all timed overrides on top of
+  // everything else (see setLaughing/setAthenaHealing/setTharoxGlory/
+  // setZerathysSoul/setAkyrosShadow in dashboardScreen.js). Velorya shows a
   // "hidden" portrait for as long as Lunar Eclipse's untargetable status
   // lasts (persistent state, not a timed flash) - takes priority over her
   // injured look since she's cloaked regardless of how hurt she is
@@ -123,6 +124,8 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/tharox_glory.jpg';
   } else if (character.id === 'zerathys' && isZerathysSoul && !character.isKO) {
     portrait.src = 'assets/images/zerathys_soul.jpg';
+  } else if (character.id === 'akyros' && isAkyrosShadow && !character.isKO) {
+    portrait.src = 'assets/images/akyros_shadow.jpg';
   } else if (character.id === 'velorya' && character.untargetable && !character.isKO) {
     portrait.src = 'assets/images/velorya_hided.jpg';
   } else if (character.id === 'blade' && character.special.rebirthUsed) {

@@ -72,6 +72,10 @@ export function renderDashboard(container, game, { onRestart }) {
   // explicit-timer pattern as the flags above.
   let zerathysSoulCharacterIds = new Set();
   let zerathysSoulClearTimer = null;
+  // Character ids to briefly show Akyros's Shadow Execution portrait on -
+  // same explicit-timer pattern as the flags above.
+  let akyrosShadowCharacterIds = new Set();
+  let akyrosShadowClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -508,6 +512,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isAthenaHealing: athenaHealingCharacterIds.has(character.id),
           isTharoxGlory: tharoxGloryCharacterIds.has(character.id),
           isZerathysSoul: zerathysSoulCharacterIds.has(character.id),
+          isAkyrosShadow: akyrosShadowCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -815,6 +820,7 @@ export function renderDashboard(container, game, { onRestart }) {
       shakeCharacterIds.add(targetId);
       clawCharacterIds.add(targetId);
       clawCounts.set(targetId, 3);
+      if (!game.characters[characterId].isKO) setAkyrosShadow(characterId);
     }
     if (actionId === 'bloodHunt' && targetId && !result?.dodged && result?.amountDealt > 0) {
       const streak = game.characters[characterId]?.special?.streakCount || 1;
@@ -946,6 +952,18 @@ export function renderDashboard(container, game, { onRestart }) {
     zerathysSoulClearTimer = setTimeout(() => {
       zerathysSoulClearTimer = null;
       zerathysSoulCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Akyros's Shadow Execution portrait for a fixed duration - same
+  // reasoning as setLaughing above.
+  function setAkyrosShadow(characterId) {
+    akyrosShadowCharacterIds.add(characterId);
+    if (akyrosShadowClearTimer) clearTimeout(akyrosShadowClearTimer);
+    akyrosShadowClearTimer = setTimeout(() => {
+      akyrosShadowClearTimer = null;
+      akyrosShadowCharacterIds = new Set();
       render();
     }, 1600);
   }
