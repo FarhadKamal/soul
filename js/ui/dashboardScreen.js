@@ -113,8 +113,9 @@ export function renderDashboard(container, game, { onRestart }) {
   // explicit-timer pattern as the flags above.
   let athenaCurseCharacterIds = new Set();
   let athenaCurseClearTimer = null;
-  // Character ids to briefly show Velorya's Lunar Strike portrait on - same
-  // explicit-timer pattern as the flags above.
+  // Character ids to briefly show Velorya's strike portrait on - covers both
+  // Lunar Strike and Moonstep, her two attacks - same explicit-timer pattern
+  // as the flags above.
   let veloryaStrikeCharacterIds = new Set();
   let veloryaStrikeClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
@@ -885,7 +886,7 @@ export function renderDashboard(container, game, { onRestart }) {
     if (actionId === 'curseStrike' && !game.characters[characterId].isKO) {
       setAthenaCurse(characterId);
     }
-    if (actionId === 'lunarStrike' && !result?.dodged && !game.characters[characterId].isKO) {
+    if ((actionId === 'lunarStrike' || actionId === 'moonstep') && !result?.dodged && !game.characters[characterId].isKO) {
       setVeloryaStrike(characterId);
     }
     if ((actionId === 'titanSmash' || actionId === 'glorySmash') && targetId && !result?.dodged && result?.amountDealt > 0) {
@@ -1151,8 +1152,8 @@ export function renderDashboard(container, game, { onRestart }) {
     }, 1600);
   }
 
-  // Shows Velorya's Lunar Strike portrait for a fixed duration - same
-  // reasoning as setLaughing above.
+  // Shows Velorya's strike portrait (Lunar Strike or Moonstep) for a fixed
+  // duration - same reasoning as setLaughing above.
   function setVeloryaStrike(characterId) {
     veloryaStrikeCharacterIds.add(characterId);
     if (veloryaStrikeClearTimer) clearTimeout(veloryaStrikeClearTimer);

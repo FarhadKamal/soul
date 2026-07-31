@@ -113,7 +113,8 @@ export function renderCharacterCard(character, {
   // Swap OR Charge Up triggers, Akyros briefly flashes a portrait when he
   // dodges an attack, Shadow Execution lands, OR Hidden Mark is cast, Chronox
   // briefly flashes a portrait when Time Freeze OR Cyclone Punch triggers,
-  // and Velorya briefly flashes a portrait when Lunar Strike lands - all
+  // and Velorya briefly flashes a portrait when Lunar Strike OR Moonstep
+  // lands - all
   // timed overrides on top of everything else (see setLaughing/
   // setAthenaHealing/setAthenaCurse/setTharoxGlory/setZerathysSoul/
   // setAkyrosShadow/setAkyrosDodge/setBoingoHardpunch/setBoingoMiss/
