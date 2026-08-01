@@ -181,6 +181,34 @@ export function renderSetupScreen(container, onStart) {
       };
       footer.appendChild(allPcBtn);
 
+      const allRandomBtn = document.createElement('button');
+      allRandomBtn.type = 'button';
+      allRandomBtn.className = 'btn btn-small';
+      allRandomBtn.textContent = '🎲 All Random';
+      allRandomBtn.onclick = () => {
+        playUiClick();
+        // Top up every player's remaining slots at once, regardless of
+        // Human/PC - existing picks stay untouched, same "fill what's
+        // missing" behavior as the per-player Random button. Shuffle the
+        // whole unpicked pool once and hand each player their share in
+        // order, so no two players can end up drawing the same character.
+        const takenNow = new Set(picks.flat());
+        const available = CHARACTER_IDS.filter((id) => !takenNow.has(id));
+        for (let i = available.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [available[i], available[j]] = [available[j], available[i]];
+        }
+        let cursor = 0;
+        for (let pIndex = 0; pIndex < playerCount; pIndex++) {
+          const needed = picksPerPlayer - picks[pIndex].length;
+          if (needed <= 0) continue;
+          picks[pIndex].push(...available.slice(cursor, cursor + needed));
+          cursor += needed;
+        }
+        render();
+      };
+      footer.appendChild(allRandomBtn);
+
       const startBtn = document.createElement('button');
       startBtn.className = 'btn btn-primary';
       startBtn.textContent = 'Start Match';
