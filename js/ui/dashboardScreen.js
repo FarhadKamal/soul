@@ -178,6 +178,18 @@ export function renderDashboard(container, game, { onRestart }) {
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
+  // Set while a PC Zerathys's free Soul Swap Thunder Wrath follow-up is
+  // still pending (see the isAuto branch of the 'soulSwap' case below) - the
+  // intermediate render() shown right after Soul Swap itself resolves would
+  // otherwise re-enter renderActionPanel() for the still-"active" Zerathys
+  // and call scheduleBotMove() again, since botMoveScheduledFor was already
+  // reset to null the instant the ORIGINAL scheduled move started running.
+  // That stacks a second, independent bot-move timer on top of the pending
+  // follow-up timer - when it fires, Zerathys (not yet marked as acted)
+  // gets a completely separate extra action while the real follow-up is
+  // still in flight, which is what caused a player to see the same
+  // character act twice (or more) in a row with no opponent turn between.
+  let zerathysSoulSwapFollowUpPending = null;
 
   function markHitFromResult(result) {
     if (!result) return;
@@ -763,8 +775,11 @@ export function renderDashboard(container, game, { onRestart }) {
 
   // Schedules a bot's move on a short delay (so PC turns are readable rather
   // than instant) - guarded so repeated renders while the delay is pending
-  // don't stack up multiple timeouts for the same character.
+  // don't stack up multiple timeouts for the same character. Also blocked
+  // while that same character still owes a Soul Swap free-Thunder-Wrath
+  // follow-up - see zerathysSoulSwapFollowUpPending above for why.
   function scheduleBotMove(characterId) {
+    if (zerathysSoulSwapFollowUpPending === characterId) return;
     if (botMoveScheduledFor === characterId) return;
     botMoveScheduledFor = characterId;
     setTimeout(() => {
@@ -911,9 +926,16 @@ export function renderDashboard(container, game, { onRestart }) {
         // Render once here so the Soul Swap portrait/heart-swap is actually
         // visible on its own, then wait a beat before firing the free
         // Thunder Wrath - otherwise both resolve in the same synchronous
-        // tick and only the second effect is ever seen.
+        // tick and only the second effect is ever seen. This intermediate
+        // render() re-enters renderActionPanel() for the still-"active"
+        // Zerathys, which would otherwise call scheduleBotMove() again and
+        // stack a second, independent bot-move timer on top of this one -
+        // block that via zerathysSoulSwapFollowUpPending until the follow-up
+        // actually resolves.
+        zerathysSoulSwapFollowUpPending = characterId;
         render();
         setTimeout(() => {
+          zerathysSoulSwapFollowUpPending = null;
           // Soul Swap itself can't end the match (no damage dealt), but
           // guard anyway for consistency with runBotMove - nothing else
           // should be scheduling actions once the game is already over or
