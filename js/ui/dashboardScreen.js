@@ -27,6 +27,12 @@ export function renderDashboard(container, game, { onRestart }) {
   // currently on screen (the new setup screen, or a freshly started match)
   // with a render of the old, discarded game.
   let isTornDown = false;
+  // True once the game-over banner has actually been shown - the first
+  // render() after the match ends instead shows the final board state (so
+  // the winning hit's flash/shake/portrait effect is actually visible)
+  // and schedules the banner after a delay, rather than cutting straight to
+  // it and skipping that last effect entirely.
+  let gameOverBannerShown = false;
   let undoSnapshot = null;
   // armedAction: { characterId, actionId, label, targetFilter, onPicked }
   let armedAction = null;
@@ -302,6 +308,25 @@ export function renderDashboard(container, game, { onRestart }) {
 
     if (game.phase === 'game-over') {
       clearTurnTimer();
+      clearBallTimer();
+      if (!gameOverBannerShown) {
+        // Show one last freeze-frame of the board first, so the winning
+        // action's flash/shake/portrait effect is actually visible instead
+        // of being skipped by cutting straight to the banner. No character
+        // is "acting" anymore (activeCharId: null), so this is a pure
+        // display of current state - no turn-advancing side effects.
+        const wrap = document.createElement('div');
+        wrap.className = 'dashboard';
+        wrap.appendChild(renderTopBar());
+        wrap.appendChild(renderBoard(null));
+        container.appendChild(wrap);
+        setTimeout(() => {
+          if (isTornDown) return;
+          gameOverBannerShown = true;
+          render();
+        }, 1600);
+        return;
+      }
       if (!victorySoundPlayed) {
         victorySoundPlayed = true;
         if (game.winnerPlayerId) playVictory();
