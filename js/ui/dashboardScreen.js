@@ -896,8 +896,11 @@ export function renderDashboard(container, game, { onRestart }) {
             const logBefore2 = game.log.length;
             const wrathResult = executeAction(game, characterId, 'soulSwapWrath', freeTargetId);
             markHitFromResult(wrathResult);
+            clearZerathysSoul(characterId);
             if (!wrathResult?.dodged && !game.characters[characterId].isKO) setZerathysStrike(characterId);
             playPostActionSounds('soulSwapWrath', freeTargetId, logBefore2);
+          } else {
+            clearZerathysSoul(characterId);
           }
           finishAction(characterId);
         }, 2200);
@@ -912,6 +915,7 @@ export function renderDashboard(container, game, { onRestart }) {
         const logBefore2 = game.log.length;
         const wrathResult2 = executeAction(game, characterId, 'soulSwapWrath', freeTargetId);
         markHitFromResult(wrathResult2);
+        clearZerathysSoul(characterId);
         if (!wrathResult2?.dodged && !game.characters[characterId].isKO) setZerathysStrike(characterId);
         playPostActionSounds('soulSwapWrath', freeTargetId, logBefore2);
         finishAction(characterId);
@@ -1108,16 +1112,25 @@ export function renderDashboard(container, game, { onRestart }) {
     }, 1600);
   }
 
-  // Shows Zerathys's Soul Swap portrait for a fixed duration - same
-  // reasoning as setLaughing above.
+  // Shows Zerathys's Soul Swap portrait - held open (no auto-clear timer)
+  // until the free Thunder Wrath follow-up actually fires and explicitly
+  // clears it via clearZerathysSoul, so the swap stays visible for exactly
+  // as long as the player is looking at it instead of racing an arbitrary
+  // timeout against the follow-up's own delay.
   function setZerathysSoul(characterId) {
-    zerathysSoulCharacterIds.add(characterId);
-    if (zerathysSoulClearTimer) clearTimeout(zerathysSoulClearTimer);
-    zerathysSoulClearTimer = setTimeout(() => {
+    if (zerathysSoulClearTimer) {
+      clearTimeout(zerathysSoulClearTimer);
       zerathysSoulClearTimer = null;
-      zerathysSoulCharacterIds = new Set();
-      render();
-    }, 1600);
+    }
+    zerathysSoulCharacterIds.add(characterId);
+  }
+
+  // Clears the Soul Swap portrait immediately (no fade/render delay beyond
+  // whatever render the caller triggers next) - called right when the free
+  // Thunder Wrath follow-up resolves, so the character's portrait reverts to
+  // its normal/injured look exactly when the swap's effect ends.
+  function clearZerathysSoul(characterId) {
+    zerathysSoulCharacterIds.delete(characterId);
   }
 
   // Shows Akyros's Shadow Execution portrait for a fixed duration - same
