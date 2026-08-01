@@ -91,6 +91,9 @@ export function renderSetupScreen(container, onStart) {
         h3.textContent = `Player ${pIndex + 1}`;
         headerRow.appendChild(h3);
 
+        const headerControls = document.createElement('div');
+        headerControls.className = 'player-panel-header-controls';
+
         const pcToggle = document.createElement('button');
         pcToggle.type = 'button';
         pcToggle.className = 'pc-toggle' + (isPC[pIndex] ? ' active' : '');
@@ -100,8 +103,33 @@ export function renderSetupScreen(container, onStart) {
           isPC[pIndex] = !isPC[pIndex];
           render();
         };
-        headerRow.appendChild(pcToggle);
+        headerControls.appendChild(pcToggle);
 
+        if (isPC[pIndex]) {
+          const randomBtn = document.createElement('button');
+          randomBtn.type = 'button';
+          randomBtn.className = 'btn btn-small';
+          randomBtn.textContent = '🎲 Random';
+          randomBtn.onclick = () => {
+            playUiClick();
+            // Fill remaining slots for this player from whatever's not
+            // already picked by anyone (including this player's own
+            // existing picks, which stay untouched) - a pure top-up, not a
+            // full re-roll, so a partially-picked player keeps their choices.
+            const takenNow = new Set(picks.flat());
+            const available = CHARACTER_IDS.filter((id) => !takenNow.has(id));
+            for (let i = available.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [available[i], available[j]] = [available[j], available[i]];
+            }
+            const needed = picksPerPlayer - picks[pIndex].length;
+            picks[pIndex].push(...available.slice(0, needed));
+            render();
+          };
+          headerControls.appendChild(randomBtn);
+        }
+
+        headerRow.appendChild(headerControls);
         panel.appendChild(headerRow);
 
         const status = document.createElement('div');

@@ -71,6 +71,11 @@
   gap: 10px;
   margin-bottom: 4px;
 }
+.player-panel-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .player-panel h3 {
   color: var(--gold);
   margin: 0;
