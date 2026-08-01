@@ -18,6 +18,15 @@ const CHAOS_GAMBLE_ACTIONS = new Set(['chaosGamble']);
 const ACTION_TIMER_SECONDS = 20;
 
 export function renderDashboard(container, game, { onRestart }) {
+  // Set once this dashboard instance is torn down (match restarted) - every
+  // deferred callback (scheduleBotMove's timeout, the Soul Swap follow-up
+  // delay, every portrait-flash clear-timer) checks this before touching
+  // `game` or `container`, since `container` is the same shared DOM node
+  // main.js hands to the next screen. Without this, a stale timeout from an
+  // abandoned match could fire after Restart and overwrite whatever's
+  // currently on screen (the new setup screen, or a freshly started match)
+  // with a render of the old, discarded game.
+  let isTornDown = false;
   let undoSnapshot = null;
   // armedAction: { characterId, actionId, label, targetFilter, onPicked }
   let armedAction = null;
@@ -288,6 +297,7 @@ export function renderDashboard(container, game, { onRestart }) {
   }
 
   function render() {
+    if (isTornDown) return;
     container.innerHTML = '';
 
     if (game.phase === 'game-over') {
@@ -380,7 +390,7 @@ export function renderDashboard(container, game, { onRestart }) {
     const btn = document.createElement('button');
     btn.className = 'btn btn-primary';
     btn.textContent = 'New Match';
-    btn.onclick = onRestart;
+    btn.onclick = () => { isTornDown = true; onRestart(); };
     banner.appendChild(btn);
 
     wrap.appendChild(banner);
@@ -515,7 +525,7 @@ export function renderDashboard(container, game, { onRestart }) {
         body: 'This will discard the current match and return to character setup.',
         actions: [
           { label: 'Cancel' },
-          { label: 'Restart', primary: true, onClick: () => { clearTurnTimer(); onRestart(); } },
+          { label: 'Restart', primary: true, onClick: () => { clearTurnTimer(); clearBallTimer(); isTornDown = true; onRestart(); } },
         ],
       });
     };
@@ -742,8 +752,10 @@ export function renderDashboard(container, game, { onRestart }) {
     // The match can end from a different character's action while this
     // bot's move was still waiting out its scheduling delay (e.g. queued
     // right before another player's turn finished the game) - bail out
-    // rather than running an action into an already-finished match.
-    if (game.phase === 'game-over') return;
+    // rather than running an action into an already-finished match. Same
+    // for a torn-down dashboard (match restarted) - this game instance is
+    // abandoned, don't mutate it or render into the shared container.
+    if (game.phase === 'game-over' || isTornDown) return;
     const character = game.characters[characterId];
     if (!character || character.isKO) return;
     const isBallHolder = game.jesterBall && game.jesterBall.holderCharacterId === characterId
@@ -879,8 +891,9 @@ export function renderDashboard(container, game, { onRestart }) {
         setTimeout(() => {
           // Soul Swap itself can't end the match (no damage dealt), but
           // guard anyway for consistency with runBotMove - nothing else
-          // should be scheduling actions once the game is already over.
-          if (game.phase === 'game-over') return;
+          // should be scheduling actions once the game is already over or
+          // this dashboard has been torn down (match restarted).
+          if (game.phase === 'game-over' || isTornDown) return;
           const freeTargetId = chooseSoulSwapWrathTarget(game.characters[characterId], game)
             ?? pickRandomTarget(characterId, 'soulSwapWrath');
           if (freeTargetId) {
