@@ -900,7 +900,7 @@ export function renderDashboard(container, game, { onRestart }) {
             playPostActionSounds('soulSwapWrath', freeTargetId, logBefore2);
           }
           finishAction(characterId);
-        }, 2000);
+        }, 2200);
         return;
       }
 
