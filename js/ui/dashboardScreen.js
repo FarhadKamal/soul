@@ -199,17 +199,20 @@ export function renderDashboard(container, game, { onRestart }) {
   let zerathysSoulSwapFollowUpPending = null;
 
   // sourceCharacterId is optional (some callers don't have a clean single
-  // attacker to point at) - when given and the hit actually landed, queues
-  // an attack line between the two cards. A mirror hit's line source is
-  // Athena (the curse-holder), not the original attacker, since that's who
-  // the mirrored damage actually comes from.
+  // attacker to point at). The hit-flash only fires when damage actually
+  // landed, but the attack LINE is drawn for any attempted attack against a
+  // real target - including a dodge or a 0-damage miss (Chaos Gamble) -
+  // since the line shows where the attack came from, not whether it
+  // succeeded. A mirror hit's line source is Athena (the curse-holder), not
+  // the original attacker, since that's who the mirrored damage actually
+  // comes from.
   function markHitFromResult(result, sourceCharacterId) {
     if (!result) return;
     if (result.amountDealt > 0 && result.targetCharacterId) {
       flashCharacterIds.add(result.targetCharacterId);
-      if (sourceCharacterId && sourceCharacterId !== result.targetCharacterId) {
-        setAttackLine(sourceCharacterId, result.targetCharacterId);
-      }
+    }
+    if (result.targetCharacterId && sourceCharacterId && sourceCharacterId !== result.targetCharacterId) {
+      setAttackLine(sourceCharacterId, result.targetCharacterId);
     }
     if (result.mirrorResult) markHitFromResult(result.mirrorResult, 'athena');
   }
