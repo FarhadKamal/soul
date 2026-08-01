@@ -1154,7 +1154,19 @@ export function renderDashboard(container, game, { onRestart }) {
       if (hasCharacterActedThisTurn(game, character.id)) continue;
       const isBallHolder = game.jesterBall && game.jesterBall.holderCharacterId === character.id;
       if (consumeSkipIfFrozen(character)) {
-        game.log.push({ type: 'passive', characterId: character.id, text: `${CHARACTERS[character.id].name} is frozen and skips their turn.` });
+        // A frozen Jester Ball holder still can't just sit on it forever -
+        // per the game's own rule, it auto-bursts (Take) on them right here
+        // instead of silently stalling until they unfreeze. This IS their
+        // normal action for the turn too (frozen, so there's no follow-up
+        // action anyway) - explodeBallAsTake leaves markCharacterActed to
+        // the caller for a Take (since Take normally doesn't consume the
+        // turn), so mark them acted explicitly afterward.
+        if (isBallHolder) {
+          game.log.push({ type: 'passive', characterId: character.id, text: `${CHARACTERS[character.id].name} is frozen and can't resolve the Jester Ball - it bursts on them!` });
+          explodeBallAsTake(character.id, { skipRender: true });
+        } else {
+          game.log.push({ type: 'passive', characterId: character.id, text: `${CHARACTERS[character.id].name} is frozen and skips their turn.` });
+        }
         markCharacterActed(game, character.id);
         continue;
       }
