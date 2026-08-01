@@ -175,6 +175,15 @@ export function renderDashboard(container, game, { onRestart }) {
   // against her current hearts at the start of her NEXT turn to detect
   // whether she went the whole round unattacked. null until her first turn.
   let athenaHeartsAtLastTurnStart = null;
+  // Character ids to briefly show Velorya's love portrait on - same logic
+  // as Athena's kiss above: flashed once at the start of her own turn if
+  // nobody landed a hit on her since her previous turn (tracked via
+  // veloryaHeartsAtLastTurnStart below).
+  let veloryaLoveCharacterIds = new Set();
+  let veloryaLoveClearTimer = null;
+  // Velorya's hearts as of the start of her most recent turn - same
+  // reasoning as athenaHeartsAtLastTurnStart above.
+  let veloryaHeartsAtLastTurnStart = null;
   // Attack line(s) to briefly draw between an attacker's and target's cards
   // (4-player/2v2 only - see renderAttackLines) - { sourceId, targetId }
   // pairs, cleared via their own timer same as the portrait flashes. An
@@ -668,6 +677,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isVeloryaCasting: veloryaCastingCharacterIds.has(character.id),
           isBoingoNormalpunch: boingoNormalpunchCharacterIds.has(character.id),
           isAthenaKiss: athenaKissCharacterIds.has(character.id),
+          isVeloryaLove: veloryaLoveCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -1184,6 +1194,15 @@ export function renderDashboard(container, game, { onRestart }) {
           }
           athenaHeartsAtLastTurnStart = character.hearts;
         }
+        if (character.id === 'velorya' && !character.isKO) {
+          // Flash the love portrait if she took no damage since her last
+          // turn (first turn of the match always counts as untouched) -
+          // same logic as Athena's kiss above.
+          if (veloryaHeartsAtLastTurnStart === null || character.hearts >= veloryaHeartsAtLastTurnStart) {
+            setVeloryaLove(character.id);
+          }
+          veloryaHeartsAtLastTurnStart = character.hearts;
+        }
       }
       // A ball holder can always resolve the ball even with zero normal
       // actions available, so don't auto-skip them in that case.
@@ -1508,6 +1527,18 @@ export function renderDashboard(container, game, { onRestart }) {
     athenaKissClearTimer = setTimeout(() => {
       athenaKissClearTimer = null;
       athenaKissCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Velorya's love portrait for a fixed duration - same reasoning as
+  // setLaughing above.
+  function setVeloryaLove(characterId) {
+    veloryaLoveCharacterIds.add(characterId);
+    if (veloryaLoveClearTimer) clearTimeout(veloryaLoveClearTimer);
+    veloryaLoveClearTimer = setTimeout(() => {
+      veloryaLoveClearTimer = null;
+      veloryaLoveCharacterIds = new Set();
       render();
     }, 1600);
   }
