@@ -175,6 +175,13 @@ export function renderDashboard(container, game, { onRestart }) {
   // against her current hearts at the start of her NEXT turn to detect
   // whether she went the whole round unattacked. null until her first turn.
   let athenaHeartsAtLastTurnStart = null;
+  // Attack line(s) to briefly draw between an attacker's and target's cards
+  // (4-player/2v2 only - see renderAttackLines) - { sourceId, targetId }
+  // pairs, cleared via their own timer same as the portrait flashes. An
+  // array (not a Set) since two simultaneous hits (e.g. a curse mirror)
+  // should each get their own line.
+  let attackLines = [];
+  let attackLinesClearTimer = null;
   // Guards against scheduling more than one bot-move timeout for the same
   // character across repeated renders while its turn is still pending.
   let botMoveScheduledFor = null;
@@ -191,12 +198,20 @@ export function renderDashboard(container, game, { onRestart }) {
   // character act twice (or more) in a row with no opponent turn between.
   let zerathysSoulSwapFollowUpPending = null;
 
-  function markHitFromResult(result) {
+  // sourceCharacterId is optional (some callers don't have a clean single
+  // attacker to point at) - when given and the hit actually landed, queues
+  // an attack line between the two cards. A mirror hit's line source is
+  // Athena (the curse-holder), not the original attacker, since that's who
+  // the mirrored damage actually comes from.
+  function markHitFromResult(result, sourceCharacterId) {
     if (!result) return;
     if (result.amountDealt > 0 && result.targetCharacterId) {
       flashCharacterIds.add(result.targetCharacterId);
+      if (sourceCharacterId && sourceCharacterId !== result.targetCharacterId) {
+        setAttackLine(sourceCharacterId, result.targetCharacterId);
+      }
     }
-    if (result.mirrorResult) markHitFromResult(result.mirrorResult);
+    if (result.mirrorResult) markHitFromResult(result.mirrorResult, 'athena');
   }
   // turnTimer: { characterId, intervalId, remaining } - a single 20s budget
   // for the WHOLE turn (choosing an action, choosing a target, cancelling
@@ -353,7 +368,8 @@ export function renderDashboard(container, game, { onRestart }) {
     const wrap = document.createElement('div');
     wrap.className = 'dashboard';
     wrap.appendChild(renderTopBar());
-    wrap.appendChild(renderBoard(activeCharId));
+    const boardEl = renderBoard(activeCharId);
+    wrap.appendChild(boardEl);
     flashCharacterIds = new Set(); // consumed for this render only
     divineLightCharacterIds = new Set(); // consumed for this render only
     reviveCharacterIds = new Set(); // consumed for this render only
@@ -373,6 +389,10 @@ export function renderDashboard(container, game, { onRestart }) {
     // scrollHeight is unreliable on a detached element, which is why
     // auto-scroll wasn't working before.
     logPanelEl.scrollTop = logPanelEl.scrollHeight;
+    // Attack lines need real layout positions (getBoundingClientRect), so
+    // this must run after boardEl is actually attached above. 1v1 never
+    // needs it - only two cards face off, the source is always obvious.
+    if (game.mode !== '1v1') drawAttackLines(boardEl);
   }
 
   function renderGameOver() {
@@ -665,6 +685,64 @@ export function renderDashboard(container, game, { onRestart }) {
     return board;
   }
 
+  // Draws a straight line with an arrowhead from each queued attack's
+  // source card to its target card, on an absolutely-positioned SVG overlay
+  // sized to match the board. Positions come from live layout
+  // (getBoundingClientRect), so this only works once boardEl is actually
+  // attached to the document - callers must run it after that. A no-op if
+  // there's nothing queued (attackLines is cleared by its own timer, same
+  // pattern as the portrait flashes) or either card can't be found (e.g. a
+  // KO'd character whose card still renders, so this shouldn't normally
+  // happen, but a missing DOM node is a silent no-op rather than a crash).
+  function drawAttackLines(boardEl) {
+    if (attackLines.length === 0) return;
+    const boardRect = boardEl.getBoundingClientRect();
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.classList.add('attack-lines-overlay');
+    svg.setAttribute('width', boardRect.width);
+    svg.setAttribute('height', boardRect.height);
+
+    const defs = document.createElementNS(svgNS, 'defs');
+    const marker = document.createElementNS(svgNS, 'marker');
+    marker.setAttribute('id', 'attack-line-arrowhead');
+    marker.setAttribute('viewBox', '0 0 10 10');
+    marker.setAttribute('refX', '8');
+    marker.setAttribute('refY', '5');
+    marker.setAttribute('markerWidth', '7');
+    marker.setAttribute('markerHeight', '7');
+    marker.setAttribute('orient', 'auto-start-reverse');
+    const arrowPath = document.createElementNS(svgNS, 'path');
+    arrowPath.setAttribute('d', 'M0,0 L10,5 L0,10 z');
+    arrowPath.setAttribute('fill', 'var(--gold, #e8c766)');
+    marker.appendChild(arrowPath);
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+
+    let drewAny = false;
+    for (const { sourceId, targetId } of attackLines) {
+      const sourceEl = boardEl.querySelector(`[data-character-id="${sourceId}"]`);
+      const targetEl = boardEl.querySelector(`[data-character-id="${targetId}"]`);
+      if (!sourceEl || !targetEl) continue;
+      const sourceRect = sourceEl.getBoundingClientRect();
+      const targetRect = targetEl.getBoundingClientRect();
+      const x1 = sourceRect.left + sourceRect.width / 2 - boardRect.left;
+      const y1 = sourceRect.top + sourceRect.height / 2 - boardRect.top;
+      const x2 = targetRect.left + targetRect.width / 2 - boardRect.left;
+      const y2 = targetRect.top + targetRect.height / 2 - boardRect.top;
+      const line = document.createElementNS(svgNS, 'line');
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.setAttribute('class', 'attack-line');
+      line.setAttribute('marker-end', 'url(#attack-line-arrowhead)');
+      svg.appendChild(line);
+      drewAny = true;
+    }
+    if (drewAny) boardEl.appendChild(svg);
+  }
+
   function renderActionPanel(activeCharId) {
     const panel = document.createElement('div');
     panel.className = 'action-panel';
@@ -873,7 +951,7 @@ export function renderDashboard(container, game, { onRestart }) {
       // the outcome obvious without an extra click-through step.
       const logBefore = game.log.length;
       const coinResult = executeAction(game, characterId, actionId, targetId);
-      markHitFromResult(coinResult);
+      markHitFromResult(coinResult, characterId);
       const rolledFlip = game.log.slice(logBefore).find((e) => e.flip)?.flip;
       if (actionId === 'cyclonePunch' && rolledFlip === 'heads' && !coinResult?.dodged) {
         shakeCharacterIds.add(targetId);
@@ -892,7 +970,7 @@ export function renderDashboard(container, game, { onRestart }) {
       const logBefore = game.log.length;
       const outcome = rollChaosGamble();
       const rpsResult = executeAction(game, characterId, actionId, targetId, outcome);
-      markHitFromResult(rpsResult);
+      markHitFromResult(rpsResult, characterId);
       if (outcome === 'win' && !rpsResult?.dodged) {
         shakeCharacterIds.add(targetId);
         if (!game.characters[characterId].isKO) setBoingoHardpunch(characterId);
@@ -946,7 +1024,7 @@ export function renderDashboard(container, game, { onRestart }) {
           if (freeTargetId) {
             const logBefore2 = game.log.length;
             const wrathResult = executeAction(game, characterId, 'soulSwapWrath', freeTargetId);
-            markHitFromResult(wrathResult);
+            markHitFromResult(wrathResult, characterId);
             clearZerathysSoul(characterId);
             if (!wrathResult?.dodged && !game.characters[characterId].isKO) setZerathysStrike(characterId);
             playPostActionSounds('soulSwapWrath', freeTargetId, logBefore2);
@@ -965,7 +1043,7 @@ export function renderDashboard(container, game, { onRestart }) {
         pushUndoSnapshot();
         const logBefore2 = game.log.length;
         const wrathResult2 = executeAction(game, characterId, 'soulSwapWrath', freeTargetId);
-        markHitFromResult(wrathResult2);
+        markHitFromResult(wrathResult2, characterId);
         clearZerathysSoul(characterId);
         if (!wrathResult2?.dodged && !game.characters[characterId].isKO) setZerathysStrike(characterId);
         playPostActionSounds('soulSwapWrath', freeTargetId, logBefore2);
@@ -976,7 +1054,7 @@ export function renderDashboard(container, game, { onRestart }) {
 
     const logBefore = game.log.length;
     const result = executeAction(game, characterId, actionId, targetId);
-    markHitFromResult(result);
+    markHitFromResult(result, characterId);
     // Divine Restore and Glory Smash both self-heal + self-shield the
     // caster (Glory Smash also hits its target, already covered by the
     // hit-flash above via markHitFromResult) - flag the caster for the
@@ -1412,6 +1490,21 @@ export function renderDashboard(container, game, { onRestart }) {
     }, 1600);
   }
 
+  // Queues an attack line from sourceId to targetId for a fixed duration -
+  // multiple lines queued within the same window all stay visible together
+  // (e.g. a curse mirror alongside the triggering attack), sharing one clear
+  // timer that resets on each new addition so a burst of hits doesn't clear
+  // the first line before the last one's even been seen.
+  function setAttackLine(sourceId, targetId) {
+    attackLines.push({ sourceId, targetId });
+    if (attackLinesClearTimer) clearTimeout(attackLinesClearTimer);
+    attackLinesClearTimer = setTimeout(() => {
+      attackLinesClearTimer = null;
+      attackLines = [];
+      render();
+    }, 1600);
+  }
+
   function explodeBallAsTake(holderId, { skipRender = false } = {}) {
     if (!game.jesterBall || game.jesterBall.holderCharacterId !== holderId) return;
     clearBallTimer();
@@ -1425,7 +1518,7 @@ export function renderDashboard(container, game, { onRestart }) {
     const thrownByCharacterId = game.jesterBall.thrownByCharacterId;
     const logBefore = game.log.length;
     const ballResult = resolveJesterBall(game, holderId, choice, targetId);
-    markHitFromResult(ballResult);
+    markHitFromResult(ballResult, thrownByCharacterId);
     if (choice === 'pass') playSound('kick');
     else if (choice === 'take') {
       const rebirthEntry = game.log.slice(logBefore).find((e) => e.type === 'rebirth');

@@ -38,12 +38,35 @@
 }
 
 .board {
+  position: relative;
   display: flex;
   flex-wrap: nowrap;
   justify-content: center;
   gap: 14px;
   margin-bottom: 10px;
   flex-shrink: 0;
+}
+.attack-lines-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 5;
+}
+.attack-line {
+  stroke: var(--gold, #e8c766);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 4px rgba(232, 199, 102, 0.7));
+  animation: attack-line-fade 1.6s ease-out forwards;
+}
+@keyframes attack-line-fade {
+  0% { opacity: 0; }
+  15% { opacity: 0.85; }
+  75% { opacity: 0.85; }
+  100% { opacity: 0; }
 }
 .team-group {
   flex: 1;

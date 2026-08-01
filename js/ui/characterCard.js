@@ -9,6 +9,7 @@ export function renderCharacterCard(character, {
   const def = CHARACTERS[character.id];
   const card = document.createElement('div');
   card.className = 'char-card';
+  card.dataset.characterId = character.id;
   if (ownerColorClass) card.classList.add(ownerColorClass);
   if (isActing) card.classList.add('acting');
   if (character.isKO) card.classList.add('ko');
