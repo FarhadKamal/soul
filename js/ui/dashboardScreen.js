@@ -757,6 +757,11 @@ export function renderDashboard(container, game, { onRestart }) {
   }
 
   function runBotMove(characterId) {
+    // The match can end from a different character's action while this
+    // bot's move was still waiting out its scheduling delay (e.g. queued
+    // right before another player's turn finished the game) - bail out
+    // rather than running an action into an already-finished match.
+    if (game.phase === 'game-over') return;
     const character = game.characters[characterId];
     if (!character || character.isKO) return;
     const isBallHolder = game.jesterBall && game.jesterBall.holderCharacterId === characterId
@@ -890,6 +895,10 @@ export function renderDashboard(container, game, { onRestart }) {
         // tick and only the second effect is ever seen.
         render();
         setTimeout(() => {
+          // Soul Swap itself can't end the match (no damage dealt), but
+          // guard anyway for consistency with runBotMove - nothing else
+          // should be scheduling actions once the game is already over.
+          if (game.phase === 'game-over') return;
           const freeTargetId = chooseSoulSwapWrathTarget(game.characters[characterId], game)
             ?? pickRandomTarget(characterId, 'soulSwapWrath');
           if (freeTargetId) {
