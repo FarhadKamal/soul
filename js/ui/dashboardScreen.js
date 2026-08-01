@@ -726,15 +726,22 @@ export function renderDashboard(container, game, { onRestart }) {
       if (!sourceEl || !targetEl) continue;
       const sourceRect = sourceEl.getBoundingClientRect();
       const targetRect = targetEl.getBoundingClientRect();
+      // Anchor at each card's TOP edge (not center) and bow the path upward
+      // above the row, rather than a straight line through card centers -
+      // otherwise it visibly cuts through the body/portrait of any card
+      // sitting between the source and target.
       const x1 = sourceRect.left + sourceRect.width / 2 - boardRect.left;
-      const y1 = sourceRect.top + sourceRect.height / 2 - boardRect.top;
+      const y1 = sourceRect.top - boardRect.top;
       const x2 = targetRect.left + targetRect.width / 2 - boardRect.left;
-      const y2 = targetRect.top + targetRect.height / 2 - boardRect.top;
-      const line = document.createElementNS(svgNS, 'line');
-      line.setAttribute('x1', x1);
-      line.setAttribute('y1', y1);
-      line.setAttribute('x2', x2);
-      line.setAttribute('y2', y2);
+      const y2 = targetRect.top - boardRect.top;
+      const midX = (x1 + x2) / 2;
+      // Bow height scales with horizontal distance so adjacent cards get a
+      // gentle arc while far-apart cards (e.g. seat 1 to seat 4) clear
+      // everything in between with room to spare.
+      const bowHeight = Math.min(45, Math.max(20, Math.abs(x2 - x1) * 0.2));
+      const controlY = Math.min(y1, y2) - bowHeight;
+      const line = document.createElementNS(svgNS, 'path');
+      line.setAttribute('d', `M ${x1} ${y1} Q ${midX} ${controlY} ${x2} ${y2}`);
       line.setAttribute('class', 'attack-line');
       line.setAttribute('marker-end', 'url(#attack-line-arrowhead)');
       svg.appendChild(line);

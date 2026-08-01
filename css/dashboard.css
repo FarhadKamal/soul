@@ -43,6 +43,9 @@
   flex-wrap: nowrap;
   justify-content: center;
   gap: 14px;
+  /* Extra top margin gives the attack-line arcs (see .attack-lines-overlay)
+     room to bow above the cards without clipping against the top bar. */
+  margin-top: 50px;
   margin-bottom: 10px;
   flex-shrink: 0;
 }
@@ -55,6 +58,7 @@
   z-index: 5;
 }
 .attack-line {
+  fill: none;
   stroke: var(--gold, #e8c766);
   stroke-width: 3;
   stroke-linecap: round;
