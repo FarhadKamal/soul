@@ -92,7 +92,7 @@ export function renderRulesModal(container, onClose) {
     heading.className = 'rules-char-heading';
     const portrait = document.createElement('img');
     portrait.className = 'rules-char-portrait';
-    portrait.src = `assets/portraits/${id}.png`;
+    portrait.src = `assets/portraits/${id}.jpg`;
     portrait.alt = def.name;
     heading.appendChild(portrait);
     const nameSpan = document.createElement('span');

@@ -204,7 +204,7 @@ export function renderCharacterCard(character, {
   } else {
     portrait.src = isInjured || character.isKO
       ? `assets/images/injured/${character.id}.jpg`
-      : `assets/portraits/${character.id}.png`;
+      : `assets/portraits/${character.id}.jpg`;
   }
   portrait.alt = def.name;
   portraitWrap.appendChild(portrait);

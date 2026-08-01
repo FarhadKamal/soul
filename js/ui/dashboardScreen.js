@@ -436,7 +436,7 @@ export function renderDashboard(container, game, { onRestart }) {
       const box = document.createElement('div');
       box.className = 'victory-portrait-box' + (character.isKO ? ' ko' : '');
       const img = document.createElement('img');
-      img.src = `assets/portraits/${charId}.png`;
+      img.src = `assets/portraits/${charId}.jpg`;
       img.alt = def.name;
       box.appendChild(img);
       const label = document.createElement('div');
