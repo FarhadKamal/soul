@@ -592,11 +592,28 @@ export function chooseBotJesterBallMove(character, game) {
       if (targetId) return { choice: 'pass', targetId };
     }
   }
-  // Return only makes sense if Boingo is a living teammate (or this
-  // character IS Boingo) - Return always heals him +4 regardless of who
-  // returns it, so handing a free heal to an enemy Boingo would be
-  // self-defeating, and there's no one to heal if he's already KO'd.
+  // Return is always free for the holder (no self-damage) - the only
+  // downside is that it always heals Boingo +4, which is bad when he's an
+  // enemy. When he's a living teammate (or this character IS Boingo), that
+  // downside doesn't exist, so Return is a clear win. There's no one to heal
+  // if he's already KO'd, in which case Return isn't a real choice - it just
+  // wastes the turn for nothing (same as Take, but Take at least still costs
+  // him nothing more than -4, so both are equivalent there; fall through to
+  // Take for consistency).
   if (boingo && !boingo.isKO && boingo.ownerId === character.ownerId) {
+    return { choice: 'return_' };
+  }
+  // Boingo's an enemy (FFA, or 2v2 opposing team) - Return heals him for
+  // free, Take costs the holder -4. Confirmed via a real match: the bot
+  // never once chose Return here because of a since-fixed bug (it only
+  // considered Return for a same-owner Boingo), even when Take would have
+  // been fatal. Now weigh them: only when Take would actually KO the holder
+  // is eating the free heal on an enemy Boingo worth it - staying alive
+  // matters more than denying one heal. Any survivable Take, even down to 1
+  // heart, still denies the enemy that heal, which is usually worth more
+  // than the holder's own comfort - so Return is purely a last resort here,
+  // not a general low-health caution.
+  if (boingo && !boingo.isKO && character.hearts <= 4) {
     return { choice: 'return_' };
   }
   // Otherwise Take is the only sensible remaining option.
