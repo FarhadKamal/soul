@@ -573,11 +573,43 @@ export function chooseBotMove(character, game) {
   return move;
 }
 
+// True if Zerathys, after eating the Jester Ball's -4 damage, would have a
+// live enemy Soul Swap target with meaningfully more hearts than his
+// post-damage total - i.e. deliberately Taking the ball sets up a
+// Take-then-Soul-Swap combo: the -4 gets erased (and then some) by
+// immediately swapping his low hearts for the target's high pool, leaving
+// the target crippled instead. Only worth it if Soul Swap is still
+// available at all (isLegal already checks !usedSpecial elsewhere, but this
+// runs before any action is chosen, so check the flag directly here).
+function zerathysBallComboTarget(character, game) {
+  if (character.id !== 'zerathys' || character.usedSpecial) return null;
+  const heartsAfterTake = Math.max(0, character.hearts - 4);
+  if (heartsAfterTake <= 0) return null; // Take would KO him - no combo to set up
+  const targets = Object.keys(game.characters).filter((tid) => isValidTarget(game, character.id, 'soulSwap', tid));
+  const maxHearts = targets.length > 0 ? Math.max(...targets.map((tid) => game.characters[tid].hearts)) : 0;
+  const tiedBest = targets.filter((tid) => game.characters[tid].hearts === maxHearts);
+  const best = pickRandom(tiedBest);
+  if (best && game.characters[best].hearts > heartsAfterTake + 1) {
+    return best;
+  }
+  return null;
+}
+
 // Jester Ball resolution for a PC holder. Returns 'return_' | 'pass' | 'take'
 // and, for 'pass', the chosen new holder's character id.
 export function chooseBotJesterBallMove(character, game) {
   const jb = game.jesterBall;
   const boingo = game.characters[jb.thrownByCharacterId];
+  // Zerathys-specific: deliberately Take the ball to set up an immediate
+  // Soul Swap combo (see zerathysBallComboTarget) - this is a bigger tempo
+  // swing than relocating the ball via Pass, so it takes priority whenever
+  // available. The actual Soul Swap itself isn't chosen here (Take doesn't
+  // consume his turn action - he still gets his normal action right after,
+  // where chooseZerathysMove's existing Soul Swap logic picks up the same
+  // now-even-more-favorable target on its own).
+  if (zerathysBallComboTarget(character, game)) {
+    return { choice: 'take' };
+  }
   // Passing it onto an enemy is the best outcome when available - it moves
   // the eventual -4 (or the whole decision) onto whoever's the biggest
   // threat instead of eating it themselves.
