@@ -141,6 +141,18 @@ export function renderSetupScreen(container, onStart) {
 
       const footer = document.createElement('div');
       footer.className = 'setup-footer';
+
+      const allPcBtn = document.createElement('button');
+      allPcBtn.type = 'button';
+      allPcBtn.className = 'btn btn-small';
+      allPcBtn.textContent = '🖥 All PC';
+      allPcBtn.onclick = () => {
+        playUiClick();
+        for (let i = 0; i < playerCount; i++) isPC[i] = true;
+        render();
+      };
+      footer.appendChild(allPcBtn);
+
       const startBtn = document.createElement('button');
       startBtn.className = 'btn btn-primary';
       startBtn.textContent = 'Start Match';
