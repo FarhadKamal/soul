@@ -883,16 +883,24 @@ export function renderDashboard(container, game, { onRestart }) {
         // as a normal Thunder Wrath choice rather than a plain random pick -
         // a fully random pick could waste the free hit on a shielded target
         // for zero effect when an unshielded one was available.
-        const freeTargetId = chooseSoulSwapWrathTarget(game.characters[characterId], game)
-          ?? pickRandomTarget(characterId, 'soulSwapWrath');
-        if (freeTargetId) {
-          const logBefore2 = game.log.length;
-          const wrathResult = executeAction(game, characterId, 'soulSwapWrath', freeTargetId);
-          markHitFromResult(wrathResult);
-          if (!wrathResult?.dodged && !game.characters[characterId].isKO) setZerathysStrike(characterId);
-          playPostActionSounds('soulSwapWrath', freeTargetId, logBefore2);
-        }
-        finishAction(characterId);
+        //
+        // Render once here so the Soul Swap portrait/heart-swap is actually
+        // visible on its own, then wait a beat before firing the free
+        // Thunder Wrath - otherwise both resolve in the same synchronous
+        // tick and only the second effect is ever seen.
+        render();
+        setTimeout(() => {
+          const freeTargetId = chooseSoulSwapWrathTarget(game.characters[characterId], game)
+            ?? pickRandomTarget(characterId, 'soulSwapWrath');
+          if (freeTargetId) {
+            const logBefore2 = game.log.length;
+            const wrathResult = executeAction(game, characterId, 'soulSwapWrath', freeTargetId);
+            markHitFromResult(wrathResult);
+            if (!wrathResult?.dodged && !game.characters[characterId].isKO) setZerathysStrike(characterId);
+            playPostActionSounds('soulSwapWrath', freeTargetId, logBefore2);
+          }
+          finishAction(characterId);
+        }, 1200);
         return;
       }
 
