@@ -12,7 +12,6 @@ import { toggleFullscreen } from './fullscreen.js';
 import { rollChaosGamble } from '../engine/random.js';
 import { chooseBotMove, chooseBotJesterBallMove, chooseSoulSwapWrathTarget } from '../engine/botPlayer.js';
 import { playActionSound, playUiClick, playKO, playVictory, playCoin, playSound, startTickLoop, stopTickLoop, startMenuMusic } from '../engine/sound.js';
-import { getConsoleLogText } from '../engine/consoleCapture.js';
 
 const COIN_FLIP_ACTIONS = new Set(['cyclonePunch']);
 const CHAOS_GAMBLE_ACTIONS = new Set(['chaosGamble']);
@@ -406,14 +405,6 @@ export function renderDashboard(container, game, { onRestart }) {
       copyTextToClipboard(copyLogBtn, formatLogAsText(game));
     };
     logButtons.appendChild(copyLogBtn);
-    const copyConsoleBtn = document.createElement('button');
-    copyConsoleBtn.className = 'btn btn-small';
-    copyConsoleBtn.textContent = 'Copy Console Log';
-    copyConsoleBtn.onclick = () => {
-      playUiClick();
-      copyTextToClipboard(copyConsoleBtn, getConsoleLogText());
-    };
-    logButtons.appendChild(copyConsoleBtn);
     logHeadingRow.appendChild(logButtons);
     wrap.appendChild(logHeadingRow);
     const logPanel = renderLogPanel(game);
@@ -488,15 +479,6 @@ export function renderDashboard(container, game, { onRestart }) {
       copyTextToClipboard(copyLogBtn, formatLogAsText(game));
     };
     actions.appendChild(copyLogBtn);
-
-    const copyConsoleBtn = document.createElement('button');
-    copyConsoleBtn.className = 'btn btn-small';
-    copyConsoleBtn.textContent = 'Copy Console Log';
-    copyConsoleBtn.onclick = () => {
-      playUiClick();
-      copyTextToClipboard(copyConsoleBtn, getConsoleLogText());
-    };
-    actions.appendChild(copyConsoleBtn);
 
     const fullscreenBtn = document.createElement('button');
     fullscreenBtn.className = 'btn btn-small';
