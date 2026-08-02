@@ -134,12 +134,20 @@
   border-radius: 50%;
   display: block;
 }
-/* Chronox and Akyros read smaller/lower than the other 6 faces at the
-   shared default crop - scaled up and nudged to match. */
+/* Chronox and Akyros read slightly smaller than the other 6 faces at the
+   shared default crop - nudged up modestly (1.35x badly overshot: it
+   cropped in to just eyes/beak). */
 .character-tile .tile-portrait[data-character-id="chronox"],
 .character-tile .tile-portrait[data-character-id="akyros"] {
-  transform: scale(1.35);
-  object-position: 50% 40%;
+  transform: scale(1.08);
+  object-position: 50% 32%;
+}
+/* Velorya and Athena read smaller/more zoomed-out than the other 6 at the
+   shared default crop - nudged up modestly. */
+.character-tile .tile-portrait[data-character-id="velorya"],
+.character-tile .tile-portrait[data-character-id="athena"] {
+  transform: scale(1.15);
+  object-position: 50% 30%;
 }
 
 .character-tile strong {
