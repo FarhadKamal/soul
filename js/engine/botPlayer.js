@@ -207,11 +207,25 @@ function chooseZerathysMove(character, game, usable) {
   // after that.
   if (byId.thunderWrath) {
     const wrathTargets = validTargetsFor(game, character, 'thunderWrath');
-    const securesKill = wrathTargets.find((tid) => {
+    const killableTargets = wrathTargets.filter((tid) => {
       const t = game.characters[tid];
       return t.hearts <= Math.max(0, wrathDamage - t.shield);
     });
-    if (securesKill) {
+    if (killableTargets.length > 0) {
+      // When multiple targets are all killable this turn, prefer one that
+      // doesn't also kill Zerathys himself via Athena's curse mirror -
+      // killing self-cursing Athena is only worth it when it's the ONLY
+      // kill on offer (or part of the deliberate mutual-kill logic below);
+      // if a completely safe kill exists elsewhere, take that instead.
+      // Confirmed via a real match: the bot killed a self-cursing Athena
+      // while an equally-killable, non-mirroring Chronox was also
+      // available - the mirror finished Zerathys off for no reason, when
+      // killing Chronox would have won the kill with zero downside.
+      const selfCursing = isCursedByLiveAthena(game, character);
+      const safeKills = selfCursing
+        ? killableTargets.filter((tid) => tid !== 'athena')
+        : killableTargets;
+      const securesKill = safeKills[0] ?? killableTargets[0];
       return { actionId: 'thunderWrath', targetId: securesKill };
     }
   }
