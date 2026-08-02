@@ -629,10 +629,16 @@ export function renderDashboard(container, game, { onRestart }) {
       && ballHolderId === activeCharId
       && !hasCharacterActedThisTurn(game, ballHolderId);
 
+    // Only meaningful once the match has actually ended - drives the
+    // in-place victory-art swap on the winning side's cards during the
+    // post-game freeze-frame, before the separate game-over screen appears.
+    const isGameOver = game.phase === 'game-over';
+
     game.players.forEach((player, playerIndex) => {
       const group = document.createElement('div');
       const sizeClass = player.characterIds.length === 2 ? ' team-size-2' : '';
       group.className = 'team-group' + sizeClass + (player.id === activePlayerId ? ' active-team' : '');
+      const isWinningPlayer = isGameOver && player.id === game.winnerPlayerId;
 
       const header = document.createElement('div');
       header.className = 'team-header ' + PLAYER_COLOR_CLASSES[playerIndex % PLAYER_COLOR_CLASSES.length];
@@ -648,6 +654,7 @@ export function renderDashboard(container, game, { onRestart }) {
         const isBallDropTarget = ballResolvable && isValidBallDropTarget(ballHolderId, character.id);
         const isOwnBallCard = ballResolvable && character.id === ballHolderId;
         const card = renderCharacterCard(character, {
+          isVictorious: isWinningPlayer,
           isActing: character.id === activeCharId,
           isTargetable,
           isCursed: character.id === curseId,

@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isVeloryaStrike, isBladeStrike, isZerathysStrike, isTharoxSmash, isAkyrosFatal, isBoingoThrowing, isVeloryaCasting, isBoingoNormalpunch, isAthenaKiss, isVeloryaLove, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isVeloryaStrike, isBladeStrike, isZerathysStrike, isTharoxSmash, isAkyrosFatal, isBoingoThrowing, isVeloryaCasting, isBoingoNormalpunch, isAthenaKiss, isVeloryaLove, isVictorious, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -151,7 +151,13 @@ export function renderCharacterCard(character, {
   // hits. Both "hidden" and "alive" in turn take priority over the
   // respective character's injured look.
   const isInjured = !character.isKO && character.hearts <= character.maxHearts / 2;
-  if (character.id === 'boingo' && isLaughing && !character.isKO) {
+  if (isVictorious && !character.isKO) {
+    // The match just ended and this character is on the winning side -
+    // their celebratory victory art (assets/victory/) takes priority over
+    // literally everything else, since there's nothing more to react to
+    // once the game is over.
+    portrait.src = `assets/victory/${character.id}.jpg`;
+  } else if (character.id === 'boingo' && isLaughing && !character.isKO) {
     portrait.src = 'assets/images/boingo_laughing.jpg';
   } else if (character.id === 'boingo' && isBoingoThrowing && !character.isKO) {
     portrait.src = 'assets/images/boingo_throwing.jpg';
