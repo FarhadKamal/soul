@@ -22,23 +22,24 @@ const MENU_TRACKS = ['bgm-menu.mp3', 'bgm-menu-2.mp3', 'bgm-menu-3.mp3'];
 
 // Browsers block audio autoplay until the user has interacted with the
 // page at least once - the very first call to startMenuMusic() happens on
-// initial page load (main.js), before any click/tap, so play() silently
-// rejects and no music is heard even though everything else works fine.
-// This listens for the first user interaction anywhere on the page and
-// retries playing whatever music track is current at that point, so music
-// picks up the instant the browser actually allows it.
-let pendingAutoplayRetry = false;
-function armAutoplayRetry() {
-  if (pendingAutoplayRetry) return;
-  pendingAutoplayRetry = true;
-  const retry = () => {
-    document.removeEventListener('pointerdown', retry);
-    document.removeEventListener('keydown', retry);
-    pendingAutoplayRetry = false;
-    if (musicAudio) musicAudio.play().catch(() => armAutoplayRetry());
-  };
-  document.addEventListener('pointerdown', retry, { once: true });
-  document.addEventListener('keydown', retry, { once: true });
+// initial page load (main.js), before any click/tap, so play() can fail to
+// actually start music even though everything else works fine. Some
+// browsers reject the play() promise for this (caught below); others just
+// silently leave the element paused with no rejection at all - so instead
+// of relying solely on the promise, this also arms an unconditional
+// "on first interaction, make sure music is actually playing" listener from
+// the moment the module loads, which self-heals either failure mode. Kept
+// listening (not { once: true }) and re-checked on every pointerdown/
+// keydown until playback is confirmed underway, since a single retry can
+// itself still be blocked in rare cases.
+function ensureMusicPlaying() {
+  if (musicAudio && musicAudio.paused) {
+    musicAudio.play().catch(() => {});
+  }
+}
+if (typeof document !== 'undefined') {
+  document.addEventListener('pointerdown', ensureMusicPlaying);
+  document.addEventListener('keydown', ensureMusicPlaying);
 }
 
 function startMusic(track, file, volume) {
@@ -48,7 +49,7 @@ function startMusic(track, file, volume) {
     const node = new Audio(`assets/sounds/${file}`);
     node.loop = true;
     node.volume = volume;
-    node.play().catch(() => armAutoplayRetry());
+    node.play().catch(() => {}); // ensureMusicPlaying() picks this up on the next interaction
     musicAudio = node;
     musicTrack = track;
   } catch {
