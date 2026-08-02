@@ -1202,17 +1202,23 @@ export function renderDashboard(container, game, { onRestart }) {
         beginCharacterTurn(character, game, game.log);
         if (character.id === 'athena' && !character.isKO) {
           // Flash the kiss portrait if she took no damage since her last
-          // turn (first turn of the match always counts as untouched).
-          if (athenaHeartsAtLastTurnStart === null || character.hearts >= athenaHeartsAtLastTurnStart) {
+          // turn (first turn of the match always counts as untouched) AND
+          // she's still at good health - untouched-this-round alone isn't
+          // enough, since a badly wounded character who just happened not
+          // to get hit on THIS particular round would otherwise still show
+          // an "unbothered" look that doesn't match how beat-up she is.
+          const wasUntouched = athenaHeartsAtLastTurnStart === null || character.hearts >= athenaHeartsAtLastTurnStart;
+          if (wasUntouched && character.hearts > character.maxHearts / 2) {
             setAthenaKiss(character.id);
           }
           athenaHeartsAtLastTurnStart = character.hearts;
         }
         if (character.id === 'velorya' && !character.isKO) {
           // Flash the love portrait if she took no damage since her last
-          // turn (first turn of the match always counts as untouched) -
-          // same logic as Athena's kiss above.
-          if (veloryaHeartsAtLastTurnStart === null || character.hearts >= veloryaHeartsAtLastTurnStart) {
+          // turn AND is still at good health - same reasoning as Athena's
+          // kiss above.
+          const wasUntouched = veloryaHeartsAtLastTurnStart === null || character.hearts >= veloryaHeartsAtLastTurnStart;
+          if (wasUntouched && character.hearts > character.maxHearts / 2) {
             setVeloryaLove(character.id);
           }
           veloryaHeartsAtLastTurnStart = character.hearts;
