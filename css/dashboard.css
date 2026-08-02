@@ -555,6 +555,12 @@
 .victory-portrait-box {
   width: 140px;
 }
+/* A single winner (the common 1v1/4-player case, as opposed to a 2v2 team
+   or a multi-character draw) gets a much bigger showcase image instead of
+   the same small size used to fit several portraits side by side. */
+.victory-portraits.single .victory-portrait-box {
+  width: 320px;
+}
 .victory-portrait-box img {
   width: 100%;
   aspect-ratio: 4 / 3;

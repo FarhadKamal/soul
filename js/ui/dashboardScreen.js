@@ -438,7 +438,7 @@ export function renderDashboard(container, game, { onRestart }) {
       : winner.characterIds;
 
     const portraitRow = document.createElement('div');
-    portraitRow.className = 'victory-portraits';
+    portraitRow.className = 'victory-portraits' + (portraitCharacterIds.length === 1 ? ' single' : '');
     portraitCharacterIds.forEach((charId) => {
       const character = game.characters[charId];
       const def = CHARACTERS[charId];
