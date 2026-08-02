@@ -116,8 +116,14 @@
 }
 .character-tile .tile-portrait {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  /* Face images (assets/face/) are portrait-shaped headshots, not the wide
+     16:9 battle portraits - a taller ratio plus a top-anchored crop keeps
+     each face framed consistently from about the hairline down, instead of
+     centering the crop and cutting each one off differently depending on
+     where the face happens to sit in its source image. */
+  aspect-ratio: 3 / 4;
   object-fit: cover;
+  object-position: 50% 15%;
   border-radius: 6px;
   margin-bottom: 4px;
   display: block;
