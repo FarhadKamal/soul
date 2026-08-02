@@ -68,6 +68,20 @@ export function applyDamage(game, log, {
       (c) => c.id === 'athena' && c.special.curseTargetCharacterId === target.id
     );
     if (athena) athena.special.curseTargetCharacterId = null;
+    // Chronox's Time Freeze doesn't just set skipNextTurn once - it's
+    // re-applied on CHRONOX's own next turn via freezeActive/freezeTargetId
+    // (see chronox.js onTurnStart), which has no awareness that its target
+    // died and came back in between. Clearing skipNextTurn above alone
+    // isn't enough - Chronox would just re-freeze the reborn Blade on his
+    // next turn since he's still tracked as the frozen target. Ending the
+    // freeze here too matches "comes back fresh with no negative energy."
+    const chronox = Object.values(game.characters).find(
+      (c) => c.id === 'chronox' && c.special.freezeActive && c.special.freezeTargetId === target.id
+    );
+    if (chronox) {
+      chronox.special.freezeActive = false;
+      chronox.special.freezeTargetId = null;
+    }
     // Akyros's current Hidden Mark on Blade doesn't survive his death
     // either - he's coming back fresh, so Fatal Slash/Shadow Execution
     // shouldn't still get the marked bonus against him. Only the CURRENT
