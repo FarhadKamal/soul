@@ -363,7 +363,7 @@ export function renderDashboard(container, game, { onRestart }) {
           if (isTornDown) return;
           gameOverBannerShown = true;
           render();
-        }, 1600);
+        }, 3000);
         return;
       }
       if (!victorySoundPlayed) {
