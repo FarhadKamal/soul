@@ -445,7 +445,14 @@ export function renderDashboard(container, game, { onRestart }) {
       const box = document.createElement('div');
       box.className = 'victory-portrait-box' + (character.isKO ? ' ko' : '');
       const img = document.createElement('img');
-      img.src = `assets/portraits/${charId}.jpg`;
+      // A living character on the WINNING side gets their celebratory
+      // victory art (assets/victory/) instead of the plain battle portrait -
+      // on a draw nobody actually won, and a KO'd character (shown on a
+      // draw alongside survivors) didn't win either, so both cases keep the
+      // regular portrait instead.
+      img.src = (!isDraw && !character.isKO)
+        ? `assets/victory/${charId}.jpg`
+        : `assets/portraits/${charId}.jpg`;
       img.alt = def.name;
       box.appendChild(img);
       const label = document.createElement('div');
