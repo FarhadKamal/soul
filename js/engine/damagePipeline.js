@@ -68,6 +68,17 @@ export function applyDamage(game, log, {
       (c) => c.id === 'athena' && c.special.curseTargetCharacterId === target.id
     );
     if (athena) athena.special.curseTargetCharacterId = null;
+    // Akyros's current Hidden Mark on Blade doesn't survive his death
+    // either - he's coming back fresh, so Fatal Slash/Shadow Execution
+    // shouldn't still get the marked bonus against him. Only the CURRENT
+    // mark is cleared (marks/revealedMarks) - everMarkedIds is left alone,
+    // so Akyros still can't place a brand-new mark on him later (same
+    // "once marked, never again" rule as everyone else).
+    const akyros = Object.values(game.characters).find((c) => c.id === 'akyros');
+    if (akyros) {
+      akyros.special.marks.delete(target.id);
+      akyros.special.revealedMarks.delete(target.id);
+    }
     // Deferred (not pushed to `log` here) and returned on the result so
     // executeAction() can push it AFTER the triggering attack's own log
     // entry - otherwise it lands BEFORE that entry in the log, since this
