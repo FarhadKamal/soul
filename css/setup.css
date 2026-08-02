@@ -115,17 +115,17 @@
   font-size: 12px;
 }
 .character-tile .tile-portrait {
-  width: 100%;
-  /* Face images (assets/face/) are portrait-shaped headshots, not the wide
-     16:9 battle portraits - a taller ratio plus a top-anchored crop keeps
-     each face framed consistently from about the hairline down, instead of
-     centering the crop and cutting each one off differently depending on
-     where the face happens to sit in its source image. */
-  aspect-ratio: 3 / 4;
+  /* Round avatar instead of a rectangular crop - a circle reads best with
+     the face centered (not top-anchored), so this uses a square 1:1 ratio
+     with a centered crop and a full border-radius. Fixed width/margin auto
+     keeps it centered within the tile instead of stretching edge-to-edge
+     like the old rectangular crop did. */
+  width: 72%;
+  margin: 0 auto 6px;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
-  object-position: 50% 15%;
-  border-radius: 6px;
-  margin-bottom: 4px;
+  object-position: 50% 30%;
+  border-radius: 50%;
   display: block;
 }
 
