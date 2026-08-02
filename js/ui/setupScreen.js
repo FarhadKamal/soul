@@ -148,7 +148,7 @@ export function renderSetupScreen(container, onStart) {
           const isFull = picks[pIndex].length >= picksPerPlayer && !isPickedByThis;
           tile.className = 'character-tile' + (isPickedByThis ? ' picked' : '');
           tile.disabled = isPickedByOther || isFull;
-          tile.innerHTML = `<img class="tile-portrait" data-character-id="${id}" src="assets/face/${id}.jpg" alt="${def.name}" /><strong>${def.name}</strong>${def.role}`;
+          tile.innerHTML = `<img class="tile-portrait" data-character-id="${id}" src="assets/face/${id}.jpg" alt="${def.name}" /><strong>${def.name}</strong><span class="tile-role">${def.role}</span>`;
           tile.onclick = () => {
             playUiClick();
             if (isPickedByThis) {

@@ -113,6 +113,14 @@
   background: var(--bg-card);
   color: var(--text);
   font-size: 12px;
+  /* Grid stretches every tile in a row to equal height by default, but that
+     alone doesn't keep the circular avatar aligned row-to-row - a tile
+     whose role text wraps to more lines (e.g. "Curse Guardian" vs "Blood
+     Hunter") pushes its own content taller from within, so a flex column
+     with a fixed-height text block below the avatar keeps the avatar itself
+     at a consistent position regardless of how much text follows it. */
+  display: flex;
+  flex-direction: column;
 }
 .character-tile .tile-portrait {
   /* Round avatar instead of a rectangular crop - a circle reads best with
@@ -153,6 +161,18 @@
 .character-tile strong {
   display: block;
   font-size: 12px;
+}
+.character-tile .tile-role {
+  /* Reserves the same vertical space for every tile's role text regardless
+     of whether it wraps to 1 or 2 lines (e.g. "Blood Hunter" vs "Curse
+     Guardian") - without this, a tile with a longer/wrapping role grows
+     taller from within and throws off row alignment of the avatar circles
+     above it, even though the grid already stretches every tile to the same
+     overall height. Font/color intentionally left inherited from
+     .character-tile - only the height is being fixed here. */
+  display: block;
+  min-height: 2.4em;
+  line-height: 1.2em;
 }
 .character-tile:hover:not(:disabled) {
   border-color: var(--gold);
