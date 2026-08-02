@@ -20,6 +20,27 @@ let musicTrack = null; // 'menu' | 'battle' | null
 const BATTLE_TRACKS = ['bgm-battle.mp3', 'bgm-battle-2.mp3', 'bgm-battle-3.mp3'];
 const MENU_TRACKS = ['bgm-menu.mp3', 'bgm-menu-2.mp3', 'bgm-menu-3.mp3'];
 
+// Browsers block audio autoplay until the user has interacted with the
+// page at least once - the very first call to startMenuMusic() happens on
+// initial page load (main.js), before any click/tap, so play() silently
+// rejects and no music is heard even though everything else works fine.
+// This listens for the first user interaction anywhere on the page and
+// retries playing whatever music track is current at that point, so music
+// picks up the instant the browser actually allows it.
+let pendingAutoplayRetry = false;
+function armAutoplayRetry() {
+  if (pendingAutoplayRetry) return;
+  pendingAutoplayRetry = true;
+  const retry = () => {
+    document.removeEventListener('pointerdown', retry);
+    document.removeEventListener('keydown', retry);
+    pendingAutoplayRetry = false;
+    if (musicAudio) musicAudio.play().catch(() => armAutoplayRetry());
+  };
+  document.addEventListener('pointerdown', retry, { once: true });
+  document.addEventListener('keydown', retry, { once: true });
+}
+
 function startMusic(track, file, volume) {
   if (musicTrack === track) return; // already playing this track
   if (musicAudio) musicAudio.pause();
@@ -27,7 +48,7 @@ function startMusic(track, file, volume) {
     const node = new Audio(`assets/sounds/${file}`);
     node.loop = true;
     node.volume = volume;
-    node.play().catch(() => {});
+    node.play().catch(() => armAutoplayRetry());
     musicAudio = node;
     musicTrack = track;
   } catch {
