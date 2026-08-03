@@ -33,6 +33,13 @@ export function renderDashboard(container, game, { onRestart }) {
   // and schedules the banner after a delay, rather than cutting straight to
   // it and skipping that last effect entirely.
   let gameOverBannerShown = false;
+  // True once it's OK to swap the winner's card to their victory art. This
+  // is deliberately delayed past the very first game-over render - without
+  // it, isVictorious (which takes top priority in characterCard.js's
+  // portrait chain) would immediately steal the display from the winning
+  // action's OWN hit-flash/shake/action-portrait effect the instant the
+  // freeze-frame renders, so that last effect would never actually be seen.
+  let showVictoryArt = false;
   let undoSnapshot = null;
   // armedAction: { characterId, actionId, label, targetFilter, onPicked }
   let armedAction = null;
@@ -354,16 +361,28 @@ export function renderDashboard(container, game, { onRestart }) {
         // of being skipped by cutting straight to the banner. No character
         // is "acting" anymore (activeCharId: null), so this is a pure
         // display of current state - no turn-advancing side effects.
+        // showVictoryArt stays false for this first stretch so the winning
+        // action's own effect gets to be seen before the victory art (which
+        // otherwise takes top priority and would steal the display
+        // immediately) takes over for the rest of the freeze-frame.
         const wrap = document.createElement('div');
         wrap.className = 'dashboard';
         wrap.appendChild(renderTopBar());
         wrap.appendChild(renderBoard(null));
         container.appendChild(wrap);
-        setTimeout(() => {
-          if (isTornDown) return;
-          gameOverBannerShown = true;
-          render();
-        }, 3000);
+        if (!showVictoryArt) {
+          setTimeout(() => {
+            if (isTornDown || gameOverBannerShown) return;
+            showVictoryArt = true;
+            render();
+          }, 1200);
+        } else {
+          setTimeout(() => {
+            if (isTornDown) return;
+            gameOverBannerShown = true;
+            render();
+          }, 1800);
+        }
         return;
       }
       if (!victorySoundPlayed) {
@@ -629,10 +648,11 @@ export function renderDashboard(container, game, { onRestart }) {
       && ballHolderId === activeCharId
       && !hasCharacterActedThisTurn(game, ballHolderId);
 
-    // Only meaningful once the match has actually ended - drives the
-    // in-place victory-art swap on the winning side's cards during the
-    // post-game freeze-frame, before the separate game-over screen appears.
-    const isGameOver = game.phase === 'game-over';
+    // Only meaningful once the match has actually ended AND the delayed
+    // showVictoryArt flag has flipped - drives the in-place victory-art
+    // swap on the winning side's cards during the post-game freeze-frame,
+    // after the winning action's own effect has already had its moment.
+    const isGameOver = game.phase === 'game-over' && showVictoryArt;
 
     game.players.forEach((player, playerIndex) => {
       const group = document.createElement('div');
