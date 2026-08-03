@@ -381,7 +381,7 @@ export function renderDashboard(container, game, { onRestart }) {
             if (isTornDown) return;
             gameOverBannerShown = true;
             render();
-          }, 1800);
+          }, 3800);
         }
         return;
       }
