@@ -209,8 +209,10 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/blade_strike.jpg';
   } else if (character.id === 'blade' && character.special.rebirthUsed) {
     portrait.src = 'assets/images/blade_alive.jpg';
+  } else if (character.isKO) {
+    portrait.src = `assets/koed/${character.id}.jpg`;
   } else {
-    portrait.src = isInjured || character.isKO
+    portrait.src = isInjured
       ? `assets/images/injured/${character.id}.jpg`
       : `assets/portraits/${character.id}.jpg`;
   }
