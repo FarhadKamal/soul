@@ -207,7 +207,7 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/velorya_love.jpg';
   } else if (character.id === 'blade' && isBladeStrike && !character.isKO) {
     portrait.src = 'assets/images/blade_strike.jpg';
-  } else if (character.id === 'blade' && character.special.rebirthUsed) {
+  } else if (character.id === 'blade' && character.special.rebirthUsed && !character.isKO) {
     portrait.src = 'assets/images/blade_alive.jpg';
   } else if (character.isKO) {
     portrait.src = `assets/koed/${character.id}.jpg`;
