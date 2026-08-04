@@ -212,6 +212,14 @@ export function renderDashboard(container, game, { onRestart }) {
   // Tharox's hearts as of the start of his most recent turn - same
   // reasoning as athenaHeartsAtLastTurnStart above.
   let tharoxHeartsAtLastTurnStart = null;
+  // Character ids to briefly show Blade's guitar portrait on - same logic as
+  // Athena's kiss/Velorya's love/Boingo's circus/Zerathys's glass/Tharox's
+  // roar above.
+  let bladeGuiterCharacterIds = new Set();
+  let bladeGuiterClearTimer = null;
+  // Blade's hearts as of the start of his most recent turn - same reasoning
+  // as athenaHeartsAtLastTurnStart above.
+  let bladeHeartsAtLastTurnStart = null;
   // Attack line(s) to briefly draw between an attacker's and target's cards
   // (4-player/2v2 only - see renderAttackLines) - { sourceId, targetId }
   // pairs, cleared via their own timer same as the portrait flashes. An
@@ -736,6 +744,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isBoingoCircus: boingoCircusCharacterIds.has(character.id),
           isZerathysGlass: zerathysGlassCharacterIds.has(character.id),
           isTharoxRoar: tharoxRoarCharacterIds.has(character.id),
+          isBladeGuiter: bladeGuiterCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -1297,6 +1306,16 @@ export function renderDashboard(container, game, { onRestart }) {
           }
           tharoxHeartsAtLastTurnStart = character.hearts;
         }
+        if (character.id === 'blade' && !character.isKO) {
+          // Flash the guitar portrait if he took no damage since his last
+          // turn AND is still at good health - same reasoning as Athena's
+          // kiss above.
+          const wasUntouched = bladeHeartsAtLastTurnStart === null || character.hearts >= bladeHeartsAtLastTurnStart;
+          if (wasUntouched && character.hearts > character.maxHearts / 2) {
+            setBladeGuiter(character.id);
+          }
+          bladeHeartsAtLastTurnStart = character.hearts;
+        }
       }
       // A ball holder can always resolve the ball even with zero normal
       // actions available, so don't auto-skip them in that case.
@@ -1669,6 +1688,18 @@ export function renderDashboard(container, game, { onRestart }) {
     tharoxRoarClearTimer = setTimeout(() => {
       tharoxRoarClearTimer = null;
       tharoxRoarCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Blade's guitar portrait for a fixed duration - same reasoning as
+  // setLaughing above.
+  function setBladeGuiter(characterId) {
+    bladeGuiterCharacterIds.add(characterId);
+    if (bladeGuiterClearTimer) clearTimeout(bladeGuiterClearTimer);
+    bladeGuiterClearTimer = setTimeout(() => {
+      bladeGuiterClearTimer = null;
+      bladeGuiterCharacterIds = new Set();
       render();
     }, 1600);
   }
