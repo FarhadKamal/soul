@@ -198,6 +198,13 @@ export function renderDashboard(container, game, { onRestart }) {
   // Boingo's hearts as of the start of his most recent turn - same
   // reasoning as athenaHeartsAtLastTurnStart above.
   let boingoHeartsAtLastTurnStart = null;
+  // Character ids to briefly show Zerathys's glass portrait on - same logic
+  // as Athena's kiss/Velorya's love/Boingo's circus above.
+  let zerathysGlassCharacterIds = new Set();
+  let zerathysGlassClearTimer = null;
+  // Zerathys's hearts as of the start of his most recent turn - same
+  // reasoning as athenaHeartsAtLastTurnStart above.
+  let zerathysHeartsAtLastTurnStart = null;
   // Attack line(s) to briefly draw between an attacker's and target's cards
   // (4-player/2v2 only - see renderAttackLines) - { sourceId, targetId }
   // pairs, cleared via their own timer same as the portrait flashes. An
@@ -720,6 +727,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isAthenaKiss: athenaKissCharacterIds.has(character.id),
           isVeloryaLove: veloryaLoveCharacterIds.has(character.id),
           isBoingoCircus: boingoCircusCharacterIds.has(character.id),
+          isZerathysGlass: zerathysGlassCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -1261,6 +1269,16 @@ export function renderDashboard(container, game, { onRestart }) {
           }
           boingoHeartsAtLastTurnStart = character.hearts;
         }
+        if (character.id === 'zerathys' && !character.isKO) {
+          // Flash the glass portrait if he took no damage since his last
+          // turn AND is still at good health - same reasoning as Athena's
+          // kiss above.
+          const wasUntouched = zerathysHeartsAtLastTurnStart === null || character.hearts >= zerathysHeartsAtLastTurnStart;
+          if (wasUntouched && character.hearts > character.maxHearts / 2) {
+            setZerathysGlass(character.id);
+          }
+          zerathysHeartsAtLastTurnStart = character.hearts;
+        }
       }
       // A ball holder can always resolve the ball even with zero normal
       // actions available, so don't auto-skip them in that case.
@@ -1609,6 +1627,18 @@ export function renderDashboard(container, game, { onRestart }) {
     boingoCircusClearTimer = setTimeout(() => {
       boingoCircusClearTimer = null;
       boingoCircusCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Zerathys's glass portrait for a fixed duration - same reasoning as
+  // setLaughing above.
+  function setZerathysGlass(characterId) {
+    zerathysGlassCharacterIds.add(characterId);
+    if (zerathysGlassClearTimer) clearTimeout(zerathysGlassClearTimer);
+    zerathysGlassClearTimer = setTimeout(() => {
+      zerathysGlassClearTimer = null;
+      zerathysGlassCharacterIds = new Set();
       render();
     }, 1600);
   }

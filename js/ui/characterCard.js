@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isVeloryaStrike, isBladeStrike, isZerathysStrike, isTharoxSmash, isAkyrosFatal, isBoingoThrowing, isVeloryaCasting, isBoingoNormalpunch, isAthenaKiss, isVeloryaLove, isBoingoCircus, isVictorious, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isVeloryaStrike, isBladeStrike, isZerathysStrike, isTharoxSmash, isAkyrosFatal, isBoingoThrowing, isVeloryaCasting, isBoingoNormalpunch, isAthenaKiss, isVeloryaLove, isBoingoCircus, isZerathysGlass, isVictorious, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -187,6 +187,8 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/zerathys_soul.jpg';
   } else if (character.id === 'zerathys' && isZerathysCharge && !character.isKO) {
     portrait.src = 'assets/images/zerathys_charge.jpg';
+  } else if (character.id === 'zerathys' && isZerathysGlass && !character.isKO) {
+    portrait.src = 'assets/images/zerathys_glass.jpg';
   } else if (character.id === 'akyros' && isAkyrosDodge && !character.isKO) {
     portrait.src = 'assets/images/akyros_dodge.jpg';
   } else if (character.id === 'akyros' && isAkyrosShadow && !character.isKO) {
