@@ -174,7 +174,7 @@ export function renderCharacterCard(character, {
   } else if (character.id === 'athena' && isAthenaCurse && !character.isKO) {
     portrait.src = 'assets/images/athena_curse.jpg';
   } else if (character.id === 'athena' && isAthenaKiss && !character.isKO) {
-    portrait.src = 'assets/images/athena_kiss.jpg';
+    portrait.src = 'assets/images/athena_apple.jpg';
   } else if (character.id === 'tharox' && isTharoxGlory && !character.isKO) {
     portrait.src = 'assets/images/tharox_glory.jpg';
   } else if (character.id === 'tharox' && isTharoxSmash && !character.isKO) {
