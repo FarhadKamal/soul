@@ -214,7 +214,7 @@ export function renderCharacterCard(character, {
   } else if (character.id === 'velorya' && character.untargetable && !character.isKO) {
     portrait.src = 'assets/images/velorya_hided.jpg';
   } else if (character.id === 'velorya' && isVeloryaLove && !character.isKO) {
-    portrait.src = 'assets/images/velorya_love.jpg';
+    portrait.src = 'assets/images/velorya_dance.jpg';
   } else if (character.id === 'blade' && isBladeStrike && !character.isKO) {
     portrait.src = 'assets/images/blade_strike.jpg';
   } else if (character.id === 'blade' && isBladeGuiter && !character.isKO) {
