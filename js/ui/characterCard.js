@@ -2,7 +2,7 @@ import { CHARACTERS } from '../data/characters.js';
 
 export function renderCharacterCard(character, {
   isActing, isTargetable, onTargetClick, isCursed, isHit, isFrozenVisual, isRevealedMarked,
-  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isVeloryaStrike, isBladeStrike, isZerathysStrike, isTharoxSmash, isAkyrosFatal, isBoingoThrowing, isVeloryaCasting, isBoingoNormalpunch, isAthenaKiss, isVeloryaLove, isBoingoCircus, isZerathysGlass, isTharoxRoar, isBladeGuiter, isVictorious, isHoldingBall,
+  isDivineLight, isRevived, isShaking, isClawed, clawCount, isDodging, isSmoking, isLaughing, isAthenaHealing, isTharoxGlory, isZerathysSoul, isAkyrosShadow, isChronoxTime, isAkyrosDodge, isBoingoHardpunch, isBoingoMiss, isChronoxCyclone, isAkyrosHidden, isZerathysCharge, isTharoxToss, isAthenaCurse, isVeloryaStrike, isBladeStrike, isZerathysStrike, isTharoxSmash, isAkyrosFatal, isBoingoThrowing, isVeloryaCasting, isBoingoNormalpunch, isAthenaKiss, isVeloryaLove, isBoingoCircus, isZerathysGlass, isTharoxRoar, isBladeGuiter, isChronoxSpace, isVictorious, isHoldingBall,
   isBallDropTarget, isBallClickTarget, onBallDrop, onBallIconTap, onBallIconDragStart, isBallArmed,
   ownerName, ownerColorClass,
 }) {
@@ -203,6 +203,8 @@ export function renderCharacterCard(character, {
     portrait.src = 'assets/images/chronox_time.jpg';
   } else if (character.id === 'chronox' && isChronoxCyclone && !character.isKO) {
     portrait.src = 'assets/images/chronox_cyclone.jpg';
+  } else if (character.id === 'chronox' && isChronoxSpace && !character.isKO) {
+    portrait.src = 'assets/images/chronox_space.jpg';
   } else if (character.id === 'velorya' && isVeloryaCasting && !character.isKO) {
     portrait.src = 'assets/images/velorya_casting.jpg';
   } else if (character.id === 'velorya' && isVeloryaStrike && !character.isKO) {
