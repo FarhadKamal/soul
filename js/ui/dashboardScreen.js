@@ -191,6 +191,13 @@ export function renderDashboard(container, game, { onRestart }) {
   // Velorya's hearts as of the start of her most recent turn - same
   // reasoning as athenaHeartsAtLastTurnStart above.
   let veloryaHeartsAtLastTurnStart = null;
+  // Character ids to briefly show Boingo's circus portrait on - same logic
+  // as Athena's kiss/Velorya's love above.
+  let boingoCircusCharacterIds = new Set();
+  let boingoCircusClearTimer = null;
+  // Boingo's hearts as of the start of his most recent turn - same
+  // reasoning as athenaHeartsAtLastTurnStart above.
+  let boingoHeartsAtLastTurnStart = null;
   // Attack line(s) to briefly draw between an attacker's and target's cards
   // (4-player/2v2 only - see renderAttackLines) - { sourceId, targetId }
   // pairs, cleared via their own timer same as the portrait flashes. An
@@ -712,6 +719,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isBoingoNormalpunch: boingoNormalpunchCharacterIds.has(character.id),
           isAthenaKiss: athenaKissCharacterIds.has(character.id),
           isVeloryaLove: veloryaLoveCharacterIds.has(character.id),
+          isBoingoCircus: boingoCircusCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -1243,6 +1251,16 @@ export function renderDashboard(container, game, { onRestart }) {
           }
           veloryaHeartsAtLastTurnStart = character.hearts;
         }
+        if (character.id === 'boingo' && !character.isKO) {
+          // Flash the circus portrait if he took no damage since his last
+          // turn AND is still at good health - same reasoning as Athena's
+          // kiss above.
+          const wasUntouched = boingoHeartsAtLastTurnStart === null || character.hearts >= boingoHeartsAtLastTurnStart;
+          if (wasUntouched && character.hearts > character.maxHearts / 2) {
+            setBoingoCircus(character.id);
+          }
+          boingoHeartsAtLastTurnStart = character.hearts;
+        }
       }
       // A ball holder can always resolve the ball even with zero normal
       // actions available, so don't auto-skip them in that case.
@@ -1579,6 +1597,18 @@ export function renderDashboard(container, game, { onRestart }) {
     veloryaLoveClearTimer = setTimeout(() => {
       veloryaLoveClearTimer = null;
       veloryaLoveCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Boingo's circus portrait for a fixed duration - same reasoning as
+  // setLaughing above.
+  function setBoingoCircus(characterId) {
+    boingoCircusCharacterIds.add(characterId);
+    if (boingoCircusClearTimer) clearTimeout(boingoCircusClearTimer);
+    boingoCircusClearTimer = setTimeout(() => {
+      boingoCircusClearTimer = null;
+      boingoCircusCharacterIds = new Set();
       render();
     }, 1600);
   }
