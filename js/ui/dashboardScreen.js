@@ -228,6 +228,14 @@ export function renderDashboard(container, game, { onRestart }) {
   // Chronox's hearts as of the start of his most recent turn - same
   // reasoning as athenaHeartsAtLastTurnStart above.
   let chronoxHeartsAtLastTurnStart = null;
+  // Character ids to briefly show Akyros's rose portrait on - same logic as
+  // Athena's kiss/Velorya's love/Boingo's circus/Zerathys's glass/Tharox's
+  // roar/Blade's guitar/Chronox's space above.
+  let akyrosRoseCharacterIds = new Set();
+  let akyrosRoseClearTimer = null;
+  // Akyros's hearts as of the start of his most recent turn - same
+  // reasoning as athenaHeartsAtLastTurnStart above.
+  let akyrosHeartsAtLastTurnStart = null;
   // Attack line(s) to briefly draw between an attacker's and target's cards
   // (4-player/2v2 only - see renderAttackLines) - { sourceId, targetId }
   // pairs, cleared via their own timer same as the portrait flashes. An
@@ -754,6 +762,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isTharoxRoar: tharoxRoarCharacterIds.has(character.id),
           isBladeGuiter: bladeGuiterCharacterIds.has(character.id),
           isChronoxSpace: chronoxSpaceCharacterIds.has(character.id),
+          isAkyrosRose: akyrosRoseCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -1335,6 +1344,16 @@ export function renderDashboard(container, game, { onRestart }) {
           }
           chronoxHeartsAtLastTurnStart = character.hearts;
         }
+        if (character.id === 'akyros' && !character.isKO) {
+          // Flash the rose portrait if he took no damage since his last
+          // turn AND is still at good health - same reasoning as Athena's
+          // kiss above.
+          const wasUntouched = akyrosHeartsAtLastTurnStart === null || character.hearts >= akyrosHeartsAtLastTurnStart;
+          if (wasUntouched && character.hearts > character.maxHearts / 2) {
+            setAkyrosRose(character.id);
+          }
+          akyrosHeartsAtLastTurnStart = character.hearts;
+        }
       }
       // A ball holder can always resolve the ball even with zero normal
       // actions available, so don't auto-skip them in that case.
@@ -1731,6 +1750,18 @@ export function renderDashboard(container, game, { onRestart }) {
     chronoxSpaceClearTimer = setTimeout(() => {
       chronoxSpaceClearTimer = null;
       chronoxSpaceCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Akyros's rose portrait for a fixed duration - same reasoning as
+  // setLaughing above.
+  function setAkyrosRose(characterId) {
+    akyrosRoseCharacterIds.add(characterId);
+    if (akyrosRoseClearTimer) clearTimeout(akyrosRoseClearTimer);
+    akyrosRoseClearTimer = setTimeout(() => {
+      akyrosRoseClearTimer = null;
+      akyrosRoseCharacterIds = new Set();
       render();
     }, 1600);
   }
