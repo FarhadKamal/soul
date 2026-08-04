@@ -215,8 +215,8 @@ export function renderDashboard(container, game, { onRestart }) {
   // Character ids to briefly show Blade's guitar portrait on - same logic as
   // Athena's kiss/Velorya's love/Boingo's circus/Zerathys's glass/Tharox's
   // roar above.
-  let bladeGuiterCharacterIds = new Set();
-  let bladeGuiterClearTimer = null;
+  let bladeGuitarCharacterIds = new Set();
+  let bladeGuitarClearTimer = null;
   // Blade's hearts as of the start of his most recent turn - same reasoning
   // as athenaHeartsAtLastTurnStart above.
   let bladeHeartsAtLastTurnStart = null;
@@ -760,7 +760,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isBoingoCircus: boingoCircusCharacterIds.has(character.id),
           isZerathysGlass: zerathysGlassCharacterIds.has(character.id),
           isTharoxRoar: tharoxRoarCharacterIds.has(character.id),
-          isBladeGuiter: bladeGuiterCharacterIds.has(character.id),
+          isBladeGuitar: bladeGuitarCharacterIds.has(character.id),
           isChronoxSpace: chronoxSpaceCharacterIds.has(character.id),
           isAkyrosRose: akyrosRoseCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
@@ -1330,7 +1330,7 @@ export function renderDashboard(container, game, { onRestart }) {
           // kiss above.
           const wasUntouched = bladeHeartsAtLastTurnStart === null || character.hearts >= bladeHeartsAtLastTurnStart;
           if (wasUntouched && character.hearts > character.maxHearts / 2) {
-            setBladeGuiter(character.id);
+            setBladeGuitar(character.id);
           }
           bladeHeartsAtLastTurnStart = character.hearts;
         }
@@ -1732,12 +1732,12 @@ export function renderDashboard(container, game, { onRestart }) {
 
   // Shows Blade's guitar portrait for a fixed duration - same reasoning as
   // setLaughing above.
-  function setBladeGuiter(characterId) {
-    bladeGuiterCharacterIds.add(characterId);
-    if (bladeGuiterClearTimer) clearTimeout(bladeGuiterClearTimer);
-    bladeGuiterClearTimer = setTimeout(() => {
-      bladeGuiterClearTimer = null;
-      bladeGuiterCharacterIds = new Set();
+  function setBladeGuitar(characterId) {
+    bladeGuitarCharacterIds.add(characterId);
+    if (bladeGuitarClearTimer) clearTimeout(bladeGuitarClearTimer);
+    bladeGuitarClearTimer = setTimeout(() => {
+      bladeGuitarClearTimer = null;
+      bladeGuitarCharacterIds = new Set();
       render();
     }, 1600);
   }
