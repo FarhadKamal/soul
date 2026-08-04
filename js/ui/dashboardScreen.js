@@ -205,6 +205,13 @@ export function renderDashboard(container, game, { onRestart }) {
   // Zerathys's hearts as of the start of his most recent turn - same
   // reasoning as athenaHeartsAtLastTurnStart above.
   let zerathysHeartsAtLastTurnStart = null;
+  // Character ids to briefly show Tharox's roar portrait on - same logic as
+  // Athena's kiss/Velorya's love/Boingo's circus/Zerathys's glass above.
+  let tharoxRoarCharacterIds = new Set();
+  let tharoxRoarClearTimer = null;
+  // Tharox's hearts as of the start of his most recent turn - same
+  // reasoning as athenaHeartsAtLastTurnStart above.
+  let tharoxHeartsAtLastTurnStart = null;
   // Attack line(s) to briefly draw between an attacker's and target's cards
   // (4-player/2v2 only - see renderAttackLines) - { sourceId, targetId }
   // pairs, cleared via their own timer same as the portrait flashes. An
@@ -728,6 +735,7 @@ export function renderDashboard(container, game, { onRestart }) {
           isVeloryaLove: veloryaLoveCharacterIds.has(character.id),
           isBoingoCircus: boingoCircusCharacterIds.has(character.id),
           isZerathysGlass: zerathysGlassCharacterIds.has(character.id),
+          isTharoxRoar: tharoxRoarCharacterIds.has(character.id),
           isHoldingBall: character.id === ballHolderId,
           isBallDropTarget,
           isBallClickTarget: isBallDropTarget && ballTapArmed,
@@ -1279,6 +1287,16 @@ export function renderDashboard(container, game, { onRestart }) {
           }
           zerathysHeartsAtLastTurnStart = character.hearts;
         }
+        if (character.id === 'tharox' && !character.isKO) {
+          // Flash the roar portrait if he took no damage since his last
+          // turn AND is still at good health - same reasoning as Athena's
+          // kiss above.
+          const wasUntouched = tharoxHeartsAtLastTurnStart === null || character.hearts >= tharoxHeartsAtLastTurnStart;
+          if (wasUntouched && character.hearts > character.maxHearts / 2) {
+            setTharoxRoar(character.id);
+          }
+          tharoxHeartsAtLastTurnStart = character.hearts;
+        }
       }
       // A ball holder can always resolve the ball even with zero normal
       // actions available, so don't auto-skip them in that case.
@@ -1639,6 +1657,18 @@ export function renderDashboard(container, game, { onRestart }) {
     zerathysGlassClearTimer = setTimeout(() => {
       zerathysGlassClearTimer = null;
       zerathysGlassCharacterIds = new Set();
+      render();
+    }, 1600);
+  }
+
+  // Shows Tharox's roar portrait for a fixed duration - same reasoning as
+  // setLaughing above.
+  function setTharoxRoar(characterId) {
+    tharoxRoarCharacterIds.add(characterId);
+    if (tharoxRoarClearTimer) clearTimeout(tharoxRoarClearTimer);
+    tharoxRoarClearTimer = setTimeout(() => {
+      tharoxRoarClearTimer = null;
+      tharoxRoarCharacterIds = new Set();
       render();
     }, 1600);
   }
